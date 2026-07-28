@@ -8,13 +8,9 @@ import {
   Sparkles, 
   Lock, 
   Mail, 
-  ArrowRight, 
   ShieldCheck, 
-  User, 
-  GraduationCap,
   BookOpen,
   Award,
-  CheckCircle2,
   Eye,
   EyeOff
 } from "lucide-react";
@@ -23,8 +19,8 @@ export default function LoginPage() {
   const router = useRouter();
   const { login, switchPanel } = useAuth();
 
-  const [email, setEmail] = useState("alifayaz455@gmail.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -49,31 +45,14 @@ export default function LoginPage() {
         router.push("/tutor");
       }
     } else {
-      setErrorMsg("Invalid email or password. Please check your credentials.");
-    }
-  };
-
-  const handleQuickRoleLogin = async (role: "TUTOR" | "PARENT" | "ADMIN") => {
-    if (role === "TUTOR") {
-      await login("tutor@fayaztutes.com", "password123");
-      switchPanel("TUTOR");
-      router.push("/tutor");
-    } else if (role === "PARENT") {
-      await login("parent@fayaztutes.com", "password123");
-      switchPanel("PARENT");
-      router.push("/parent/dashboard");
-    } else if (role === "ADMIN") {
-      await login("admin@fayaztutes.com", "password123");
-      switchPanel("ADMIN");
-      router.push("/admin");
+      setErrorMsg("Invalid email or password. Please check your credentials or register a new account.");
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row selection:bg-indigo-500 selection:text-white">
-      {/* Left 50% Visual Showcase (Inspired by Global Tutor) */}
+      {/* Left 50% Visual Showcase (Inspired by GlobalTutor) */}
       <div className="lg:w-1/2 bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 text-white p-8 lg:p-16 flex flex-col justify-between relative overflow-hidden">
-        {/* Decorative ambient blur */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="space-y-8 relative z-10">
@@ -95,7 +74,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* 4 Showcase Feature Cards Grid */}
+          {/* 4 Feature Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
             <div className="bg-white/10 backdrop-blur-md border border-white/15 p-5 rounded-2xl space-y-2">
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-amber-300">
@@ -203,38 +182,7 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* Quick Testing Shortcuts */}
-            <div className="space-y-2 pt-4 border-t border-slate-100 text-center">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Direct Role Access Shortcuts
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickRoleLogin("TUTOR")}
-                  className="py-2 px-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] border border-indigo-200 transition"
-                >
-                  Tutor Portal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickRoleLogin("PARENT")}
-                  className="py-2 px-1 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[10px] border border-purple-200 transition"
-                >
-                  Parent Portal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickRoleLogin("ADMIN")}
-                  className="py-2 px-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] transition"
-                >
-                  Admin Console
-                </button>
-              </div>
-            </div>
-
-            <div className="pt-2 text-center text-xs text-slate-500 space-y-2">
+            <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-500 space-y-2">
               <div>Don't have an account yet?</div>
               <div className="flex items-center justify-center gap-3 font-bold text-indigo-600">
                 <Link href="/auth/signup/tutor" className="hover:underline">Register as Tutor</Link>
