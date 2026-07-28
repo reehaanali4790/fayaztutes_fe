@@ -27,7 +27,7 @@ import {
 
 export default function RedesignedLightLandingPage() {
   const router = useRouter();
-  const { user, isAuthenticated, currentPanel, switchPanel, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const [searchSubject, setSearchSubject] = useState("");
   const [selectedCity, setSelectedCity] = useState("Karachi");
@@ -102,50 +102,21 @@ export default function RedesignedLightLandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-indigo-500 selection:text-white">
-      {/* Top Notification & Role Panel Switcher Bar */}
-      <div className="bg-slate-900 text-white text-xs py-2 px-4 flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-slate-800">
+      {/* Top Production Notification Bar */}
+      <div className="bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 text-white text-xs py-2 px-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-          <span>Need a tutor immediately? <strong>Get 2 Free Demo Classes</strong></span>
+          <span>Need a tutor immediately? <strong>Get 2 Free Demo Classes</strong> with zero commitment!</span>
         </div>
 
-        {/* Dynamic Panel Switcher Bar */}
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Panel:</span>
-          
-          <button
-            onClick={() => { switchPanel("PARENT"); router.push("/parent/dashboard"); }}
-            className={`px-2.5 py-0.5 rounded text-[10px] font-bold border transition ${
-              currentPanel === "PARENT" 
-                ? "bg-purple-600 text-white border-purple-500" 
-                : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
-            }`}
-          >
-            Parent Panel
-          </button>
-
-          <button
-            onClick={() => { switchPanel("TUTOR"); router.push("/tutor"); }}
-            className={`px-2.5 py-0.5 rounded text-[10px] font-bold border transition ${
-              currentPanel === "TUTOR" 
-                ? "bg-indigo-600 text-white border-indigo-500" 
-                : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
-            }`}
-          >
-            Tutor Panel
-          </button>
-
-          <button
-            onClick={() => { switchPanel("ADMIN"); router.push("/admin"); }}
-            className={`px-2.5 py-0.5 rounded text-[10px] font-bold border transition ${
-              currentPanel === "ADMIN" 
-                ? "bg-emerald-600 text-white border-emerald-500" 
-                : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
-            }`}
-          >
-            Admin Panel
-          </button>
-        </div>
+        <a 
+          href="https://wa.me/923353375337" 
+          target="_blank" 
+          rel="noreferrer"
+          className="hidden sm:flex items-center gap-1.5 text-emerald-300 font-bold hover:underline"
+        >
+          <Phone className="w-3.5 h-3.5" /> +92 335 337 5337
+        </a>
       </div>
 
       {/* Main Header Navigation */}
@@ -176,12 +147,14 @@ export default function RedesignedLightLandingPage() {
 
         {/* Auth State Action Buttons */}
         <div className="flex items-center gap-3">
-          {isAuthenticated ? (
-            <div className="flex items-center gap-2">
-              <div className="text-right hidden sm:block">
-                <div className="text-xs font-bold text-slate-900">{user?.full_name}</div>
-                <div className="text-[10px] font-bold text-indigo-600">{user?.role} ACCOUNT</div>
-              </div>
+          {isAuthenticated && user ? (
+            <div className="flex items-center gap-3">
+              <Link
+                href={user.role === "PARENT" ? "/parent/dashboard" : user.role === "ADMIN" ? "/admin" : "/tutor"}
+                className="px-4 py-2 rounded-xl bg-indigo-50 text-indigo-700 font-bold text-xs border border-indigo-200 hover:bg-indigo-100 transition"
+              >
+                Go to {user.role === "PARENT" ? "Parent Portal" : user.role === "ADMIN" ? "Admin Console" : "Tutor Portal"}
+              </Link>
 
               <button
                 onClick={logout}
@@ -300,6 +273,169 @@ export default function RedesignedLightLandingPage() {
             ))}
           </div>
         </form>
+
+        {/* Social Proof & Trust Badges Strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 max-w-4xl mx-auto">
+          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl text-center space-y-1 shadow-sm">
+            <div className="flex items-center justify-center gap-1 text-amber-500 font-extrabold text-2xl">
+              4.9 <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+            </div>
+            <div className="text-xs text-slate-600 font-medium">Google Reviews (300+)</div>
+          </div>
+
+          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl text-center space-y-1 shadow-sm">
+            <div className="text-2xl font-extrabold text-indigo-600">2 Free Demos</div>
+            <div className="text-xs text-slate-600 font-medium">No Commitment Trial</div>
+          </div>
+
+          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl text-center space-y-1 shadow-sm">
+            <div className="text-2xl font-extrabold text-emerald-600">Escrow Safe</div>
+            <div className="text-xs text-slate-600 font-medium">100% Fee Protection</div>
+          </div>
+
+          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl text-center space-y-1 shadow-sm">
+            <div className="text-2xl font-extrabold text-purple-600">12,148+</div>
+            <div className="text-xs text-slate-600 font-medium">Families Matched</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Tutors Section */}
+      <section id="featured" className="py-16 px-6 lg:px-12 bg-white border-y border-slate-200/80">
+        <div className="max-w-7xl mx-auto space-y-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1">
+                Verified Educator Spotlight
+              </div>
+              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                Top Rated Tutors Available Now
+              </h2>
+            </div>
+
+            <Link href="/parent/post-tuition" className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
+              View All 3,400+ Tutors <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredTutors.map((tutor) => (
+              <div 
+                key={tutor.id} 
+                className="bg-slate-50 border border-slate-200 rounded-3xl p-6 space-y-5 hover:shadow-xl transition-all group flex flex-col justify-between"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-14 h-14 rounded-2xl ${tutor.color} text-white font-extrabold text-xl flex items-center justify-center shadow-md`}>
+                        {tutor.avatar}
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-slate-900 text-base group-hover:text-indigo-600 transition-colors">
+                          {tutor.name}
+                        </h3>
+                        <div className="flex items-center gap-1.5 text-xs text-amber-500 font-bold mt-0.5">
+                          <Star className="w-3.5 h-3.5 fill-amber-400" />
+                          <span>{tutor.rating}</span>
+                          <span className="text-slate-400 font-normal">({tutor.reviews} reviews)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <span className="px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">
+                      {tutor.badge}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    {tutor.headline}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {tutor.subjects.map((sub) => (
+                      <span key={sub} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-[11px] font-semibold">
+                        {sub}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-200/80 space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500">Location & Rate</span>
+                    <span className="font-bold text-slate-900">{tutor.rate}</span>
+                  </div>
+
+                  <Link
+                    href={`/parent/post-tuition?subject=${encodeURIComponent(tutor.subjects[0])}&tutor=${encodeURIComponent(tutor.name)}`}
+                    className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-md shadow-indigo-600/20 text-center block"
+                  >
+                    Book 2 Free Demo Classes
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Visual Section (#how-it-works) */}
+      <section id="how-it-works" className="py-16 px-6 lg:px-12 bg-slate-50">
+        <div className="max-w-7xl mx-auto space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+              Simple 4-Step Journey
+            </div>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              How FayazTutes Works for Families
+            </h2>
+            <p className="text-slate-600 text-sm">
+              We eliminate risk and hassle with background-checked tutors and managed escrow protection.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white border border-slate-200 p-6 rounded-3xl space-y-3 text-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-extrabold text-xl mx-auto">
+                1
+              </div>
+              <h3 className="font-bold text-slate-900 text-base">Post Your Request</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Tell us your subject, grade level, city, and preferred tuition budget.
+              </p>
+            </div>
+
+            <div className="bg-white border border-slate-200 p-6 rounded-3xl space-y-3 text-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center font-extrabold text-xl mx-auto">
+                2
+              </div>
+              <h3 className="font-bold text-slate-900 text-base">Get AI Matched</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Our engine matches top verified tutors in your immediate area within 24 hours.
+              </p>
+            </div>
+
+            <div className="bg-white border border-slate-200 p-6 rounded-3xl space-y-3 text-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center font-extrabold text-xl mx-auto">
+                3
+              </div>
+              <h3 className="font-bold text-slate-900 text-base">2 Free Demo Classes</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Evaluate teaching style and subject mastery with 2 risk-free trial classes.
+              </p>
+            </div>
+
+            <div className="bg-white border border-slate-200 p-6 rounded-3xl space-y-3 text-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-extrabold text-xl mx-auto">
+                4
+              </div>
+              <h3 className="font-bold text-slate-900 text-base">Escrow Safe Learning</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                1st month fee held in 30-day escrow for complete parent peace of mind.
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Footer */}
