@@ -210,7 +210,126 @@ export function SubjectPicker({
   );
 }
 
-/** Compact grade + subject dropdowns for homepage search */
+/** Homepage hero: aligned Grade + Subject dropdowns (Pakistan SNC / board catalog) */
+export function HeroCatalogSearch({
+  gradeLevelId,
+  subjectId,
+  onGradeLevelChange,
+  onSubjectIdChange,
+}: {
+  gradeLevelId: string;
+  subjectId: string;
+  onGradeLevelChange: (id: string) => void;
+  onSubjectIdChange: (id: string) => void;
+}) {
+  const { tree, loading, findGrade } = useCatalog();
+
+  const subjects = useMemo(() => {
+    const grade = findGrade(gradeLevelId);
+    if (!grade) return [];
+    const map = new Map<string, { id: string; name: string }>();
+    for (const group of grade.groups) {
+      for (const sub of group.subjects) {
+        map.set(sub.id, sub);
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [gradeLevelId, findGrade]);
+
+  useEffect(() => {
+    if (loading || tree.length === 0) return;
+    const gradeExists = tree.some((c) => c.grades.some((g) => g.id === gradeLevelId));
+    if (!gradeExists) {
+      const first = tree[0]?.grades[0];
+      if (first) onGradeLevelChange(first.id);
+    }
+  }, [loading, tree, gradeLevelId, onGradeLevelChange]);
+
+  useEffect(() => {
+    if (!subjectId || subjects.length === 0) return;
+    if (!subjects.some((s) => s.id === subjectId)) {
+      onSubjectIdChange("");
+    }
+  }, [gradeLevelId, subjects, subjectId, onSubjectIdChange]);
+
+  const selectClass =
+    "w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-3 text-xs text-slate-900 font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition";
+
+  if (loading) {
+    return (
+      <>
+        <div className="sm:col-span-4">
+          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5 px-0.5">
+            Grade / Level
+          </label>
+          <div className={`${selectClass} flex items-center text-slate-400`}>Loading grades...</div>
+        </div>
+        <div className="sm:col-span-3">
+          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5 px-0.5">
+            Subject
+          </label>
+          <div className={`${selectClass} flex items-center text-slate-400`}>Loading subjects...</div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="sm:col-span-4">
+        <label
+          htmlFor="hero-grade-level"
+          className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5 px-0.5"
+        >
+          Grade / Level
+        </label>
+        <select
+          id="hero-grade-level"
+          value={gradeLevelId}
+          onChange={(e) => {
+            onGradeLevelChange(e.target.value);
+            onSubjectIdChange("");
+          }}
+          className={selectClass}
+        >
+          {tree.map((curr) => (
+            <optgroup key={curr.id} label={curr.label}>
+              {curr.grades.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </div>
+
+      <div className="sm:col-span-3">
+        <label
+          htmlFor="hero-subject"
+          className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5 px-0.5"
+        >
+          Subject
+        </label>
+        <select
+          id="hero-subject"
+          value={subjectId}
+          onChange={(e) => onSubjectIdChange(e.target.value)}
+          className={selectClass}
+        >
+          <option value="">Any subject at this level</option>
+          {subjects.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </>
+  );
+}
+
+/** @deprecated Use HeroCatalogSearch on the homepage */
 export function CatalogSearchSelect({
   gradeLevelId,
   subjectId,

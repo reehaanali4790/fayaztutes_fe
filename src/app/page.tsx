@@ -10,7 +10,8 @@ import { PageSection } from "@/components/layout/PageSection";
 import { LandingHero } from "@/components/marketing/LandingHero";
 import { AnimatedSection } from "@/components/marketing/AnimatedSection";
 import { TrustBadges } from "@/components/marketing/TrustBadges";
-import { CatalogSearchSelect } from "@/components/catalog/SubjectPicker";
+import { HeroCatalogSearch } from "@/components/catalog/SubjectPicker";
+import { DEFAULT_GRADE_LEVEL_ID, DEFAULT_SUBJECT_ID } from "@/lib/catalogFallback";
 import {
   Search,
   Star,
@@ -23,8 +24,8 @@ export default function RedesignedLightLandingPage() {
   const stats = usePublicStats();
   const { tutors: featuredTutors, loading: tutorsLoading } = useFeaturedTutors(3);
 
-  const [gradeLevelId, setGradeLevelId] = useState("o_level");
-  const [searchSubjectId, setSearchSubjectId] = useState("");
+  const [gradeLevelId, setGradeLevelId] = useState(DEFAULT_GRADE_LEVEL_ID);
+  const [searchSubjectId, setSearchSubjectId] = useState(DEFAULT_SUBJECT_ID);
   const [selectedCity, setSelectedCity] = useState("Karachi");
   const [selectedMode] = useState("HOME");
 
@@ -69,44 +70,40 @@ export default function RedesignedLightLandingPage() {
           onSubmit={handleHeroSearch}
           className="bg-white rounded-3xl p-4 sm:p-6 shadow-2xl border border-slate-200 max-w-4xl mx-auto space-y-4"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-            <div className="sm:col-span-5 relative">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1 px-1">
-                Grade & Subject
-              </label>
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 z-10 pointer-events-none" />
-                <div className="pl-8">
-                  <CatalogSearchSelect
-                    gradeLevelId={gradeLevelId}
-                    subjectId={searchSubjectId}
-                    onGradeLevelChange={setGradeLevelId}
-                    onSubjectIdChange={setSearchSubjectId}
-                  />
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:items-end">
+            <HeroCatalogSearch
+              gradeLevelId={gradeLevelId}
+              subjectId={searchSubjectId}
+              onGradeLevelChange={setGradeLevelId}
+              onSubjectIdChange={setSearchSubjectId}
+            />
 
-            <div className="sm:col-span-3">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1 px-1">
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="hero-city"
+                className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5 px-0.5"
+              >
                 City / Region
               </label>
               <select
+                id="hero-city"
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs text-slate-900 font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition"
+                className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-3 text-xs text-slate-900 font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition"
               >
                 <option value="Karachi">Karachi</option>
                 <option value="Lahore">Lahore</option>
                 <option value="Islamabad">Islamabad</option>
+                <option value="Rawalpindi">Rawalpindi</option>
+                <option value="Peshawar">Peshawar</option>
                 <option value="Online">Online Worldwide</option>
               </select>
             </div>
 
-            <div className="sm:col-span-4 flex items-end">
+            <div className="sm:col-span-3">
               <button
                 type="submit"
-                className="w-full py-3.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-lg shadow-indigo-600/30 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                className="w-full h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-lg shadow-indigo-600/30 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
                 <Search className="w-4 h-4" />
                 Find Tutors Now

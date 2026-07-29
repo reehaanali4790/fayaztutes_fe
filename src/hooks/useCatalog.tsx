@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
+import { CATALOG_FALLBACK } from "@/lib/catalogFallback";
 
 export interface CatalogSubject {
   id: string;
@@ -53,10 +54,10 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch(`${API_BASE_URL}/catalog/tree`);
       if (!res.ok) throw new Error("Failed to load catalog");
       const data = await res.json();
-      setTree(data);
+      setTree(Array.isArray(data) && data.length > 0 ? data : CATALOG_FALLBACK);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load catalog");
-      setTree([]);
+      setTree(CATALOG_FALLBACK);
     } finally {
       setLoading(false);
     }
