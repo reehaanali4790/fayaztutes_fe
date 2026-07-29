@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  clearStoredSession,
+  hasStoredSession,
+  readStoredSession,
+  writeStoredSession,
+} from "@/lib/authSession";
+import { clearTutorOnboardingPending } from "@/lib/tutorOnboarding";
 
 export interface UserSession {
   id: string;
@@ -27,6 +34,7 @@ interface AuthContextType {
     teaching_grade_ids?: string[];
   }) => Promise<{ success: boolean; error?: string; role?: UserSession["role"] }>;
   logout: () => void;
+  syncSession: () => void;
   switchPanel: (panel: "PARENT" | "TUTOR" | "ADMIN" | "VISITOR") => void;
 }
 
@@ -39,18 +47,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [currentPanel, setCurrentPanel] = useState<"PARENT" | "TUTOR" | "ADMIN" | "VISITOR">("VISITOR");
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem("ft_user");
-    const savedToken = localStorage.getItem("ft_token");
-    const savedPanel = localStorage.getItem("ft_panel") as "PARENT" | "TUTOR" | "ADMIN" | "VISITOR" | null;
+  const applySession = useCallback(
+    (session: ReturnType<typeof readStoredSession>) => {
+      if (!session) {
+        setUser(null);
+        setToken(null);
+        setCurrentPanel("VISITOR");
+        return;
+      }
+      setUser(session.user);
+      setToken(session.token);
+      setCurrentPanel(
+        (session.panel as "PARENT" | "TUTOR" | "ADMIN" | "VISITOR") || session.user.role
+      );
+    },
+    []
+  );
 
-    if (savedUser && savedToken) {
-      const parsedUser = JSON.parse(savedUser);
-      setUser(parsedUser);
-      setToken(savedToken);
-      setCurrentPanel(savedPanel || parsedUser.role || "VISITOR");
-    }
-  }, []);
+  const syncSession = useCallback(() => {
+    applySession(readStoredSession());
+  }, [applySession]);
+
+  useEffect(() => {
+    syncSession();
+
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) syncSession();
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") syncSession();
+    };
+
+    window.addEventListener("pageshow", onPageShow);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [syncSession]);
 
   const login = async (email: string, password: string) => {
     const cleanEmail = email.toLowerCase().trim();
@@ -74,9 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(sessionUser);
         setToken(data.access_token);
         setCurrentPanel(sessionUser.role);
-        localStorage.setItem("ft_user", JSON.stringify(sessionUser));
-        localStorage.setItem("ft_token", data.access_token);
-        localStorage.setItem("ft_panel", sessionUser.role);
+        writeStoredSession(sessionUser, data.access_token, sessionUser.role);
         return { success: true, role: sessionUser.role };
       }
 
@@ -123,9 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(newUser);
         setToken(resData.access_token);
         setCurrentPanel(newUser.role);
-        localStorage.setItem("ft_user", JSON.stringify(newUser));
-        localStorage.setItem("ft_token", resData.access_token);
-        localStorage.setItem("ft_panel", newUser.role);
+        writeStoredSession(newUser, resData.access_token, newUser.role);
         return { success: true, role: newUser.role };
       }
 
@@ -140,9 +171,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setToken(null);
     setCurrentPanel("VISITOR");
-    localStorage.removeItem("ft_user");
-    localStorage.removeItem("ft_token");
-    localStorage.removeItem("ft_panel");
+    clearStoredSession();
+    clearTutorOnboardingPending();
   };
 
   const switchPanel = (panel: "PARENT" | "TUTOR" | "ADMIN" | "VISITOR") => {
@@ -156,10 +186,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         token,
         currentPanel,
-        isAuthenticated: !!user && !!token,
+        isAuthenticated: !!user && !!token && hasStoredSession(),
         login,
         signup,
         logout,
+        syncSession,
         switchPanel,
       }}
     >

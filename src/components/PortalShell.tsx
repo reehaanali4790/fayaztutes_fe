@@ -82,7 +82,7 @@ export default function PortalShell({
               <button
                 onClick={() => {
                   logout();
-                  router.push("/auth/login");
+                  router.replace("/auth/login");
                 }}
                 className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700"
                 title="Sign out"

@@ -1,35 +1,66 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { hasStoredSession, readStoredSession } from "@/lib/authSession";
 import { Lock, ShieldAlert } from "lucide-react";
+import type { UserSession } from "@/context/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles: Array<"PARENT" | "TUTOR" | "ADMIN">;
 }
 
+type AuthState = "checking" | "unauthenticated" | "forbidden" | "authorized";
+
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { syncSession } = useAuth();
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
+  const [authState, setAuthState] = useState<AuthState>("checking");
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+
+  const verifyAccess = useCallback(() => {
+    syncSession();
+
+    const session = readStoredSession();
+    if (!session) {
+      setCurrentUser(null);
+      setAuthState("unauthenticated");
+      router.replace("/auth/login");
+      return;
+    }
+
+    if (!allowedRoles.includes(session.user.role)) {
+      setCurrentUser(session.user);
+      setAuthState("forbidden");
+      return;
+    }
+
+    setCurrentUser(session.user);
+    setAuthState("authorized");
+  }, [allowedRoles, router, syncSession]);
 
   useEffect(() => {
-    // Short delay to allow localStorage hydration
-    const timer = setTimeout(() => {
-      const savedUser = localStorage.getItem("ft_user");
-      if (!savedUser && !isAuthenticated) {
-        router.push("/auth/login");
-      } else {
-        setChecking(false);
-      }
-    }, 100);
+    verifyAccess();
 
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, router]);
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) verifyAccess();
+    };
 
-  if (checking) {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") verifyAccess();
+    };
+
+    window.addEventListener("pageshow", onPageShow);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [verifyAccess]);
+
+  if (authState === "checking") {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center font-sans">
         <div className="space-y-3">
@@ -40,17 +71,15 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     );
   }
 
-  const currentUser = user || (typeof window !== "undefined" && localStorage.getItem("ft_user") ? JSON.parse(localStorage.getItem("ft_user")!) : null);
-
-  if (!currentUser) {
+  if (authState === "unauthenticated" || !hasStoredSession()) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center">
         <div className="bg-white border border-slate-200 p-8 rounded-3xl max-w-md space-y-4 shadow-xl">
           <Lock className="w-12 h-12 text-indigo-600 mx-auto" />
           <h2 className="text-xl font-extrabold text-slate-900">Authentication Required</h2>
-          <p className="text-xs text-slate-600">Please sign in to access this portal.</p>
+          <p className="text-xs text-slate-600">Your session has ended. Please sign in again.</p>
           <button
-            onClick={() => router.push("/auth/login")}
+            onClick={() => router.replace("/auth/login")}
             className="w-full py-3 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md"
           >
             Go to Sign In
@@ -60,7 +89,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     );
   }
 
-  if (!allowedRoles.includes(currentUser.role)) {
+  if (authState === "forbidden" && currentUser) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center">
         <div className="bg-white border border-slate-200 p-8 rounded-3xl max-w-md space-y-4 shadow-xl">
@@ -71,10 +100,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
           </p>
           <button
             onClick={() => {
-              if (currentUser.role === "TUTOR") router.push("/tutor");
-              else if (currentUser.role === "PARENT") router.push("/parent/dashboard");
-              else if (currentUser.role === "ADMIN") router.push("/admin");
-              else router.push("/");
+              if (currentUser.role === "TUTOR") router.replace("/tutor");
+              else if (currentUser.role === "PARENT") router.replace("/parent/dashboard");
+              else if (currentUser.role === "ADMIN") router.replace("/admin");
+              else router.replace("/");
             }}
             className="w-full py-3 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md"
           >
@@ -83,6 +112,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         </div>
       </div>
     );
+  }
+
+  if (authState !== "authorized") {
+    return null;
   }
 
   return <>{children}</>;

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Sparkles, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -10,6 +11,7 @@ interface SiteHeaderProps {
 }
 
 export function SiteHeader({ showPromoBar = false }: SiteHeaderProps) {
+  const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
 
   return (
@@ -88,7 +90,10 @@ export function SiteHeader({ showPromoBar = false }: SiteHeaderProps) {
                   : "Tutor Portal"}
               </Link>
               <button
-                onClick={logout}
+                onClick={() => {
+                  logout();
+                  router.replace("/auth/login");
+                }}
                 className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
                 title="Sign Out"
               >
