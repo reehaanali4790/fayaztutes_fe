@@ -38,7 +38,15 @@ export default function PortalShell({
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const meta = portalLabels[portal];
-  const activeBorder = accent === "purple" ? "border-purple-600 text-purple-600" : "border-indigo-600 text-indigo-600";
+  const activeNav =
+    accent === "purple"
+      ? "bg-purple-50 text-purple-700"
+      : "bg-indigo-50 text-indigo-700";
+  const activeBadge =
+    accent === "purple"
+      ? "bg-purple-100 text-purple-700"
+      : "bg-indigo-100 text-indigo-700";
+  const hoverNav = "text-slate-600 hover:bg-slate-50";
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col">
@@ -89,32 +97,40 @@ export default function PortalShell({
       <div className="flex flex-1 max-w-7xl mx-auto w-full">
         <aside
           className={cn(
-            "fixed lg:sticky top-[65px] left-0 z-30 h-[calc(100vh-65px)] w-64 bg-white border-r border-slate-200 p-4 transition-transform lg:translate-x-0",
+            "fixed lg:sticky top-[65px] left-0 z-30 h-[calc(100vh-65px)] w-64 bg-white border-r border-slate-200 p-4 transition-transform lg:translate-x-0 flex flex-col",
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
-          <nav className="space-y-1">
+          <nav className="space-y-1 flex flex-col h-full">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
-                  key={item.href}
+                  key={`${item.href}-${item.name}`}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
                     "flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition",
-                    isActive ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                    isActive ? activeNav : hoverNav
                   )}
                 >
                   <span>{item.name}</span>
                   {item.badge !== undefined && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                    <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", activeBadge)}>
                       {item.badge}
                     </span>
                   )}
                 </Link>
               );
             })}
+            <div className="mt-auto pt-4 border-t border-slate-100">
+              <Link
+                href="/"
+                className="flex items-center px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition"
+              >
+                Back to Home
+              </Link>
+            </div>
           </nav>
         </aside>
 

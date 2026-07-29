@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import TutorLayout from "@/components/TutorLayout";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { useMyApplications } from "@/hooks/useApiData";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
@@ -51,9 +49,7 @@ export default function MyTuitionsPage() {
   }, [applications]);
 
   return (
-    <ProtectedRoute allowedRoles={["TUTOR", "ADMIN"]}>
-      <TutorLayout>
-        <div className="space-y-6">
+    <div className="space-y-6">
           <PageHeader title="Tuition Opportunities" description="Track your applications across pipeline stages." />
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -91,8 +87,6 @@ export default function MyTuitionsPage() {
               )}
             </div>
           )}
-        </div>
-      </TutorLayout>
-    </ProtectedRoute>
+    </div>
   );
 }

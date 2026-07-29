@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import TutorLayout from "@/components/TutorLayout";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { useMyApplications } from "@/hooks/useApiData";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
@@ -36,9 +34,7 @@ export default function DemosPage() {
   }, [demoApps, demos]);
 
   return (
-    <ProtectedRoute allowedRoles={["TUTOR", "ADMIN"]}>
-      <TutorLayout>
-        <div className="space-y-6">
+    <div className="space-y-6">
           <PageHeader
             title="Demo Sessions"
             description="View your scheduled demo classes with prospective students."
@@ -76,8 +72,6 @@ export default function DemosPage() {
               </Card>
             ))
           )}
-        </div>
-      </TutorLayout>
-    </ProtectedRoute>
+    </div>
   );
 }

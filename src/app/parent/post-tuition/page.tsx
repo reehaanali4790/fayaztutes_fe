@@ -118,31 +118,7 @@ function PostTuitionWizardContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-indigo-500 selection:text-white">
-      {/* Top Bar */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-xs">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-extrabold text-white">
-            FT
-          </div>
-          <span className="font-extrabold text-lg tracking-tight text-slate-900">
-            FayazTutes
-          </span>
-        </Link>
-        <Link href="/tutor" className="text-xs font-bold text-indigo-600 hover:underline">
-          Switch to Tutor Portal $\rightarrow$
-        </Link>
-      </header>
-
-      <main className="flex-1 p-6 lg:p-12 max-w-4xl mx-auto w-full">
-        {!isAuthenticated && (
-          <div className="bg-amber-50 border border-amber-200 p-6 rounded-3xl text-center space-y-3 mb-6">
-            <p className="text-sm font-bold text-amber-900">Sign in required to post a tuition request.</p>
-            <Link href="/auth/login" className="inline-block px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs">
-              Sign In as Parent
-            </Link>
-          </div>
-        )}
+    <div className="max-w-4xl mx-auto w-full space-y-6">
         {!submitted ? (
           <div className="bg-white border border-slate-200 rounded-3xl p-6 lg:p-10 space-y-8 shadow-xl animate-in fade-in duration-300">
             <div>
@@ -325,7 +301,7 @@ function PostTuitionWizardContent() {
                     type="submit"
                     className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm shadow-xl shadow-indigo-600/30"
                   >
-                    Post Request & Match Tutors 🚀
+                    Post Request and Match Tutors
                   </button>
                 )}
               </div>
@@ -458,7 +434,6 @@ function PostTuitionWizardContent() {
             </div>
           </div>
         )}
-      </main>
     </div>
   );
 }

@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import TutorLayout from "@/components/TutorLayout";
 import { TuitionLead, apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useOpenTuitions, useMyApplications } from "@/hooks/useApiData";
 import { EmptyState } from "@/components/ui/EmptyState";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { 
   Search, 
   MapPin, 
@@ -96,9 +94,7 @@ export default function RedesignedLightActiveTuitionsPage() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={["TUTOR", "ADMIN"]}>
-    <TutorLayout>
-      <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
             Active Tuitions List
@@ -116,14 +112,14 @@ export default function RedesignedLightActiveTuitionsPage() {
             placeholder="Search by subject, grade, area or tuition code..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition shadow-xs"
+            className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition shadow-sm"
           />
         </div>
 
         {/* Main Workspace */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filter Sidebar */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-5 space-y-6 h-fit shadow-xs">
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 space-y-6 h-fit shadow-sm">
             <div className="flex items-center gap-2 text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
               <Filter className="w-4 h-4 text-indigo-600" />
               <span>Filter Opportunities</span>
@@ -196,7 +192,7 @@ export default function RedesignedLightActiveTuitionsPage() {
                     onClick={() => setSelectedGender(g.value)}
                     className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-semibold text-center transition ${
                       selectedGender === g.value 
-                        ? "bg-indigo-600 text-white shadow-xs" 
+                        ? "bg-indigo-600 text-white shadow-sm" 
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
@@ -229,7 +225,7 @@ export default function RedesignedLightActiveTuitionsPage() {
                 return (
                   <div
                     key={item.id}
-                    className="bg-white border border-slate-200 hover:border-indigo-300 rounded-3xl p-6 transition-all shadow-xs hover:shadow-md space-y-4 group"
+                    className="bg-white border border-slate-200 hover:border-indigo-300 rounded-3xl p-6 transition-all shadow-sm hover:shadow-md space-y-4 group"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-100 pb-4">
                       <div className="space-y-1">
@@ -356,8 +352,6 @@ export default function RedesignedLightActiveTuitionsPage() {
             </div>
           </div>
         )}
-      </div>
-    </TutorLayout>
-    </ProtectedRoute>
+    </div>
   );
 }

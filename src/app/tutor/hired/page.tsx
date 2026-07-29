@@ -1,8 +1,6 @@
 "use client";
 
 import React from "react";
-import TutorLayout from "@/components/TutorLayout";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { useMyApplications } from "@/hooks/useApiData";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
@@ -14,9 +12,7 @@ export default function HiredTuitionsPage() {
   const hired = applications.filter((a) => a.status === "HIRED");
 
   return (
-    <ProtectedRoute allowedRoles={["TUTOR", "ADMIN"]}>
-      <TutorLayout>
-        <div className="space-y-6">
+    <div className="space-y-6">
           <PageHeader title="Hired Tuitions" description="Active tuition engagements and payout details." />
 
           {loading ? (
@@ -40,8 +36,6 @@ export default function HiredTuitionsPage() {
               </Card>
             ))
           )}
-        </div>
-      </TutorLayout>
-    </ProtectedRoute>
+    </div>
   );
 }

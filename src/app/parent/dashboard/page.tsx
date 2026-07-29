@@ -2,8 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import ParentLayout from "@/components/ParentLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useMyTuitionLeads, useMyEscrow } from "@/hooks/useApiData";
 import { Tabs } from "@/components/ui/Tabs";
@@ -11,8 +9,8 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { apiFetch, Application, DemoSession } from "@/lib/api";
+import { PortalHero } from "@/components/layout/PortalHero";
 import {
-  Sparkles,
   Star,
   Video,
   Lock,
@@ -133,21 +131,20 @@ export default function ParentDashboardPage() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={["PARENT", "ADMIN"]}>
-      <ParentLayout>
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white p-6 lg:p-8 rounded-2xl shadow-xl">
-            <p className="text-xs font-bold text-indigo-100 uppercase tracking-wider mb-2">Parent Dashboard</p>
-            <h1 className="text-3xl font-extrabold">Welcome, {user?.full_name || "Parent"}</h1>
-            <p className="text-indigo-100 text-sm mt-2">
-              Manage tuition leads, review applicants, schedule demos, and track escrow payments.
-            </p>
-            <Link href="/parent/post-tuition" className="inline-block mt-4">
-              <Button variant="secondary" className="bg-white text-indigo-900 hover:bg-slate-100">
-                Post New Tuition Lead
-              </Button>
-            </Link>
-          </div>
+    <div className="space-y-6">
+      <PortalHero
+        label="Parent Dashboard"
+        title={`Welcome, ${user?.full_name || "Parent"}`}
+        description="Manage tuition leads, review applicants, schedule demos, and track escrow payments."
+        accent="purple"
+        action={
+          <Link href="/parent/post-tuition">
+            <Button variant="secondary" className="bg-white text-indigo-900 hover:bg-slate-100">
+              Post New Tuition Lead
+            </Button>
+          </Link>
+        }
+      />
 
           <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} accent="purple" />
 
@@ -314,8 +311,6 @@ export default function ParentDashboardPage() {
               </div>
             </div>
           )}
-        </div>
-      </ParentLayout>
-    </ProtectedRoute>
+    </div>
   );
 }

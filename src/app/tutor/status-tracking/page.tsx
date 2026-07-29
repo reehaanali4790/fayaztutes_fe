@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import TutorLayout from "@/components/TutorLayout";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { useMyApplications } from "@/hooks/useApiData";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Tabs } from "@/components/ui/Tabs";
@@ -38,9 +36,7 @@ export default function StatusTrackingPage() {
   }));
 
   return (
-    <ProtectedRoute allowedRoles={["TUTOR", "ADMIN"]}>
-      <TutorLayout>
-        <div className="space-y-6">
+    <div className="space-y-6">
           <PageHeader title="Status Tracking" description="Monitor all your tuition applications in one place." />
           <Tabs tabs={tabs} active={filter} onChange={setFilter} />
 
@@ -69,8 +65,6 @@ export default function StatusTrackingPage() {
               ))}
             </div>
           )}
-        </div>
-      </TutorLayout>
-    </ProtectedRoute>
+    </div>
   );
 }

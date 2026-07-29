@@ -4,22 +4,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  GraduationCap, 
-  Mail, 
-  Lock, 
-  User, 
-  Phone, 
-  MapPin, 
-  ShieldCheck, 
-  ArrowRight,
-  Sparkles,
-  BookOpen,
-  Award,
-  CheckCircle2,
-  Eye,
-  EyeOff
-} from "lucide-react";
+import { AuthBrandPanel } from "@/components/layout/AuthBrandPanel";
+import { Button } from "@/components/ui/Button";
+import { GraduationCap, ArrowLeft } from "lucide-react";
 
 export default function TutorSignupPage() {
   const router = useRouter();
@@ -69,78 +56,19 @@ export default function TutorSignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row selection:bg-indigo-500 selection:text-white">
-      {/* Left 50% Visual Showcase (Inspired by GlobalTutor) */}
-      <div className="lg:w-1/2 bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 text-white p-8 lg:p-16 flex flex-col justify-between relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
+      <AuthBrandPanel
+        badge="Educator Network Portal"
+        badgeIcon={GraduationCap}
+        title="Teach and Earn with Pakistan's Top Network"
+        description="Connect with students across Pakistan and online worldwide. 0% commission from Month 2 onward."
+      />
 
-        <div className="space-y-8 relative z-10">
-          <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="w-12 h-12 rounded-2xl bg-white text-indigo-700 font-extrabold text-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform">
-              FT
-            </div>
-            <span className="font-extrabold text-2xl tracking-tight text-white">
-              FayazTutes
-            </span>
-          </Link>
-
-          <div className="space-y-4 max-w-lg">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-purple-200 text-xs font-bold border border-white/20">
-              <GraduationCap className="w-4 h-4 text-amber-300" /> Educator Network Portal
-            </div>
-            <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-              Teach & Earn with Pakistan's Top Network
-            </h1>
-            <p className="text-indigo-100 text-base leading-relaxed font-normal">
-              Connect with thousands of students across Karachi, Lahore, Islamabad, and online worldwide. <strong>0% commission from Month 2 onward!</strong>
-            </p>
-          </div>
-
-          {/* 4 Feature Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 p-5 rounded-2xl space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-emerald-300">
-                <Award className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-white text-sm">0% Cut From Month 2</h3>
-              <p className="text-xs text-indigo-100">Keep 100% of your earnings after 1st month.</p>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 p-5 rounded-2xl space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-amber-300">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-white text-sm">Verified CNIC Badge</h3>
-              <p className="text-xs text-indigo-100">Stand out to parents with verified checkmark.</p>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 p-5 rounded-2xl space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-purple-300">
-                <BookOpen className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-white text-sm">Home & Online</h3>
-              <p className="text-xs text-indigo-100">Choose your preferred mode and location.</p>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 p-5 rounded-2xl space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-blue-300">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-white text-sm">Escrow Guaranteed</h3>
-              <p className="text-xs text-indigo-100">Timely 1st month bank transfer payouts.</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-8 text-xs text-indigo-200 border-t border-white/10 flex items-center justify-between relative z-10">
-          <span>© 2026 FayazTutes Platform. All rights reserved.</span>
-          <span>Educator Network</span>
-        </div>
-      </div>
-
-      {/* Right 50% Form Area (Inspired by GlobalTutor) */}
       <div className="lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center items-center overflow-y-auto">
         <div className="w-full max-w-lg space-y-6">
+          <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:underline">
+            <ArrowLeft className="w-4 h-4" /> Back to FayazTutes
+          </Link>
           <div className="space-y-2 text-center lg:text-left">
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
               Create Tutor Account
@@ -150,7 +78,7 @@ export default function TutorSignupPage() {
             </p>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm space-y-6">
             {errorMsg && (
               <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-2xl text-xs font-bold text-center">
                 {errorMsg}
@@ -263,13 +191,9 @@ export default function TutorSignupPage() {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/20 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
-              >
-                {loading ? "Registering Profile..." : "Complete Tutor Registration 🚀"}
-              </button>
+              <Button type="submit" disabled={loading} className="w-full" size="lg">
+                {loading ? "Registering Profile..." : "Complete Tutor Registration"}
+              </Button>
 
               <div className="flex items-center justify-center gap-3 pt-2 text-[11px] text-slate-500 font-medium">
                 <span className="bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-full border border-emerald-200">✓ 0% Month 2 Commission</span>

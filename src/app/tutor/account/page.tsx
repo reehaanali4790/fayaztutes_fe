@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import TutorLayout from "@/components/TutorLayout";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useTutorProfile } from "@/hooks/useApiData";
@@ -112,9 +110,7 @@ export default function AccountSettingsPage() {
   const displayName = user?.full_name || profile?.full_name || "Tutor";
 
   return (
-    <ProtectedRoute allowedRoles={["TUTOR", "ADMIN"]}>
-      <TutorLayout>
-        <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6 max-w-3xl mx-auto">
           <div>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Account settings</h1>
             <p className="text-slate-500 text-sm mt-1">
@@ -268,8 +264,6 @@ export default function AccountSettingsPage() {
               </div>
             </div>
           )}
-        </div>
-      </TutorLayout>
-    </ProtectedRoute>
+    </div>
   );
 }
