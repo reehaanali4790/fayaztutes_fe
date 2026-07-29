@@ -136,7 +136,11 @@ export interface DemoSession {
   status: string;
   parent_feedback?: string;
   rating?: number;
-  created_at: string;
+  created_at?: string;
+  tutor_name?: string;
+  parent_name?: string;
+  tuition_title?: string;
+  tuition_code?: string;
 }
 
 export interface EscrowPayment {
