@@ -15,6 +15,36 @@ export async function apiFetch(
   return fetch(`${API_BASE_URL}${path}`, { ...options, headers });
 }
 
+export interface CertificateEntry {
+  name: string;
+  issuer?: string;
+  year?: number;
+}
+
+export interface EducationEntry {
+  board: string;
+  institution: string;
+  group?: string | null;
+  year_completed?: number | null;
+  grade_or_result?: string | null;
+  subjects: string[];
+}
+
+export interface WorkExperienceEntry {
+  title: string;
+  organization: string;
+  start_year?: number | null;
+  end_year?: number | null;
+  is_current?: boolean;
+  description?: string;
+}
+
+export interface BoardQualificationEntry {
+  board: string;
+  group?: string | null;
+  subjects: string[];
+}
+
 export interface TutorProfile {
   id: string;
   user_id: string;
@@ -37,6 +67,26 @@ export interface TutorProfile {
   bank_name?: string;
   bank_account_number?: string;
   account_title?: string;
+  skills?: string[];
+  certificates?: CertificateEntry[];
+  education?: EducationEntry[];
+  work_experience?: WorkExperienceEntry[];
+  board_qualifications?: BoardQualificationEntry[];
+  resume_filename?: string;
+}
+
+export interface ResumeParseResult {
+  headline?: string;
+  bio?: string;
+  experience_years: number;
+  city?: string;
+  skills: string[];
+  certificates: CertificateEntry[];
+  education: EducationEntry[];
+  work_experience: WorkExperienceEntry[];
+  subjects_can_teach: string[];
+  board_qualifications: BoardQualificationEntry[];
+  resume_filename?: string;
 }
 
 export interface TuitionLead {
@@ -132,5 +182,23 @@ export interface KYCQueueItem {
 export async function fetchJson<T>(path: string, token?: string | null): Promise<T> {
   const res = await apiFetch(path, {}, token);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+export async function uploadResumeForParsing(
+  file: File,
+  token: string | null
+): Promise<ResumeParseResult> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API_BASE_URL}/tutors/me/resume/parse`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Upload failed (${res.status})`);
+  }
   return res.json();
 }

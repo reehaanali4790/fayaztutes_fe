@@ -48,8 +48,19 @@ export default function TutorHomePage() {
             </div>
             <div className="text-xs text-slate-600 space-y-1">
               <div><strong>{activeApps.length}</strong> active applications</div>
-              <div><strong>{profile.experience_years}</strong> years experience</div>
+              <div>
+                <strong>{profile.experience_years}</strong> years experience
+                {profile.experience_years === 3 && !profile.work_experience?.length && (
+                  <span className="text-amber-600 ml-1">— update in Edit Profile</span>
+                )}
+              </div>
+              {profile.skills && profile.skills.length > 0 && (
+                <div><strong>{profile.skills.length}</strong> skills listed</div>
+              )}
             </div>
+            <Link href="/tutor/account" className="text-xs font-bold text-indigo-600 hover:underline shrink-0">
+              Complete profile
+            </Link>
           </div>
         ) : (
           <p className="text-sm text-slate-500">Complete your profile in Account Settings.</p>
