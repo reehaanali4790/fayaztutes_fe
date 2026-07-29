@@ -12,28 +12,31 @@ import {
   ShieldCheck,
   Search,
   Calendar,
-  X
+  X,
+  GraduationCap
 } from "lucide-react";
 import { apiFetch, MatchRecommendation } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useMatchRecommendations } from "@/hooks/useApiData";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { GraduationCap } from "lucide-react";
+import { SubjectPicker } from "@/components/catalog/SubjectPicker";
+import { useCatalog } from "@/hooks/useCatalog";
 
 function PostTuitionWizardContent() {
   const router = useRouter();
   const { token, isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
-  const initialSubject = searchParams.get("subject") || "O Level / Cambridge";
-  const initialCity = searchParams.get("city") || "Karachi";
-  const initialMode = searchParams.get("mode") || "HOME";
+  const initialGradeLevelId = searchParams.get("grade_level_id") || "o_level";
+  const initialSubjectIds = searchParams.get("subject_ids")?.split(",").filter(Boolean) || [];
 
   const [step, setStep] = useState(1);
-  const [grade, setGrade] = useState(initialSubject.includes("O Level") ? "Cambridge O Level" : "Cambridge A Level");
-  const [subjects, setSubjects] = useState(initialSubject);
+  const [gradeLevelId, setGradeLevelId] = useState(initialGradeLevelId);
+  const [subjectIds, setSubjectIds] = useState<string[]>(initialSubjectIds);
+  const { findGrade, findCurriculumForGrade, subjectName } = useCatalog();
+  const initialCity = searchParams.get("city") || "Karachi";
+  const initialMode = searchParams.get("mode") || "HOME";
   const [mode, setMode] = useState(initialMode);
   const [city, setCity] = useState(initialCity);
-  const [area, setArea] = useState("DHA Phase 5");
   const [genderPref, setGenderPref] = useState("ANY");
   const [offeredFee, setOfferedFee] = useState("35000");
   const [submitted, setSubmitted] = useState(false);
@@ -44,13 +47,13 @@ function PostTuitionWizardContent() {
   const [selectedMatch, setSelectedMatch] = useState<MatchRecommendation | null>(null);
   const [demoSuccess, setDemoSuccess] = useState(false);
 
+  const [area, setArea] = useState("DHA Phase 5");
+
   useEffect(() => {
-    if (searchParams.get("subject")) {
-      setSubjects(searchParams.get("subject") || "");
-    }
-    if (searchParams.get("city")) {
-      setCity(searchParams.get("city") || "");
-    }
+    const g = searchParams.get("grade_level_id");
+    const s = searchParams.get("subject_ids");
+    if (g) setGradeLevelId(g);
+    if (s) setSubjectIds(s.split(",").filter(Boolean));
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,19 +70,29 @@ function PostTuitionWizardContent() {
       return;
     }
 
+    if (subjectIds.length === 0) {
+      alert("Please select at least one subject from the catalog.");
+      return;
+    }
+
     setSubmitError("");
+    const gradeLabel = findGrade(gradeLevelId)?.label || gradeLevelId;
+    const curriculum = findCurriculumForGrade(gradeLevelId)?.label || "Pakistan";
+    const subjectNames = subjectIds.map((id) => subjectName(id));
     const payload = {
-      title: `Grade: ${grade} Subject: ${subjects}`,
-      grade_level: grade,
-      subjects: subjects.split(",").map((s) => s.trim()).filter(Boolean),
-      curriculum: "Cambridge",
+      title: `${gradeLabel}: ${subjectNames.join(", ")}`,
+      grade_level_id: gradeLevelId,
+      grade_level: gradeLabel,
+      subject_ids: subjectIds,
+      subjects: subjectNames,
+      curriculum,
       teaching_mode: mode,
       city: city,
       area: area,
       preferred_tutor_gender: genderPref,
       offered_fee: fee,
       is_negotiable: true,
-      description: `Tuition lead posted for ${grade} (${subjects}) in ${area}, ${city}.`
+      description: `Tuition lead for ${gradeLabel} (${subjectNames.join(", ")}) in ${area}, ${city}.`
     };
 
     try {
@@ -158,34 +171,13 @@ function PostTuitionWizardContent() {
               {step === 1 && (
                 <div className="space-y-4 animate-in fade-in duration-200">
                   <h3 className="text-base font-bold text-slate-900">Step 1: Academic Requirements</h3>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700">Grade / Academic Level</label>
-                    <select
-                      value={grade}
-                      onChange={(e) => setGrade(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500"
-                    >
-                      <option value="Cambridge O Level">Cambridge O Level (IGCSE)</option>
-                      <option value="Cambridge A Level">Cambridge A Level</option>
-                      <option value="Primary & Junior Grades (1-5)">Primary & Junior Grades (1-5)</option>
-                      <option value="Middle School (Grades 6-8)">Middle School (Grades 6-8)</option>
-                      <option value="Matric / FSc">Matric / Intermediate FSc</option>
-                      <option value="MDCAT / ECAT Entry Test">MDCAT / ECAT Entry Test Prep</option>
-                      <option value="Coding & Computer Skills">Coding & Skill Development</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700">Subjects Needed</label>
-                    <input
-                      type="text"
-                      value={subjects}
-                      onChange={(e) => setSubjects(e.target.value)}
-                      placeholder="e.g. Mathematics, Physics, Chemistry, English"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500"
-                      required
-                    />
-                  </div>
+                  <SubjectPicker
+                    gradeLevelId={gradeLevelId}
+                    subjectIds={subjectIds}
+                    onGradeLevelChange={setGradeLevelId}
+                    onSubjectIdsChange={setSubjectIds}
+                    initialCurriculumId={findCurriculumForGrade(gradeLevelId)?.id}
+                  />
                 </div>
               )}
 
@@ -263,7 +255,7 @@ function PostTuitionWizardContent() {
 
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs text-slate-700">
                     <div className="font-bold text-indigo-700">Request Summary:</div>
-                    <div>• <strong>Level:</strong> {grade} ({subjects})</div>
+                    <div>• <strong>Level:</strong> {findGrade(gradeLevelId)?.label || gradeLevelId} ({subjectIds.map((id) => subjectName(id)).join(", ")})</div>
                     <div>• <strong>Location:</strong> {area}, {city} ({mode} Tuition)</div>
                     <div>• <strong>Fee Offered:</strong> Rs {parseInt(offeredFee || "0").toLocaleString()} / month</div>
                     <div>• <strong>Guarantees Included:</strong> 2 Free Demo Classes + First Month Escrow Protection</div>
@@ -291,7 +283,13 @@ function PostTuitionWizardContent() {
                 {step < 3 ? (
                   <button
                     type="button"
-                    onClick={() => setStep(step + 1)}
+                    onClick={() => {
+                      if (step === 1 && subjectIds.length === 0) {
+                        alert("Please select at least one subject.");
+                        return;
+                      }
+                      setStep(step + 1);
+                    }}
                     className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 flex items-center gap-2"
                   >
                     Next <ArrowRight className="w-4 h-4" />
@@ -315,7 +313,7 @@ function PostTuitionWizardContent() {
                 <CheckCircle2 className="w-4 h-4" /> Request Submitted Successfully!
               </div>
               <h2 className="text-2xl font-extrabold text-slate-900">AI Matched Recommended Tutors</h2>
-              <p className="text-xs text-slate-600">Our engine matched top verified tutors in {area}, {city} for {subjects}.</p>
+              <p className="text-xs text-slate-600">Our engine matched top verified tutors in {area}, {city} for {subjectIds.map((id) => subjectName(id)).join(", ")}.</p>
               <Link href="/parent/dashboard" className="inline-block mt-2 font-bold text-indigo-600 hover:underline text-xs">
                 Go to Parent Portal Dashboard $\rightarrow$
               </Link>

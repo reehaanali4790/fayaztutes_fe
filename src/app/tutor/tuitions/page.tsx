@@ -16,6 +16,13 @@ import {
   X
 } from "lucide-react";
 
+function formatTuitionDate(value?: string) {
+  if (!value) return "Recently posted";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
+}
+
 export default function RedesignedLightActiveTuitionsPage() {
   const { token } = useAuth();
   const [search, setSearch] = useState("");
@@ -52,7 +59,8 @@ export default function RedesignedLightActiveTuitionsPage() {
         item.title.toLowerCase().includes(searchLower) ||
         item.area.toLowerCase().includes(searchLower) ||
         item.tuition_code.toLowerCase().includes(searchLower) ||
-        item.subjects.some((s) => s.toLowerCase().includes(searchLower));
+        item.subjects.some((s) => s.toLowerCase().includes(searchLower)) ||
+        (item.subject_ids || []).some((s) => s.toLowerCase().includes(searchLower));
 
       const matchesCity = selectedCity === "ALL" || item.city.toLowerCase() === selectedCity.toLowerCase();
       const matchesMode = selectedMode === "ALL" || item.teaching_mode.toUpperCase() === selectedMode.toUpperCase();
@@ -268,7 +276,7 @@ export default function RedesignedLightActiveTuitionsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                        <span>{item.created_at}</span>
+                        <span>{formatTuitionDate(item.created_at)}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <DollarSign className="w-3.5 h-3.5 text-emerald-600 shrink-0" />

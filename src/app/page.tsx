@@ -10,6 +10,7 @@ import { PageSection } from "@/components/layout/PageSection";
 import { LandingHero } from "@/components/marketing/LandingHero";
 import { AnimatedSection } from "@/components/marketing/AnimatedSection";
 import { TrustBadges } from "@/components/marketing/TrustBadges";
+import { CatalogSearchSelect } from "@/components/catalog/SubjectPicker";
 import {
   Search,
   Star,
@@ -22,18 +23,18 @@ export default function RedesignedLightLandingPage() {
   const stats = usePublicStats();
   const { tutors: featuredTutors, loading: tutorsLoading } = useFeaturedTutors(3);
 
-  const [searchSubject, setSearchSubject] = useState("");
+  const [gradeLevelId, setGradeLevelId] = useState("o_level");
+  const [searchSubjectId, setSearchSubjectId] = useState("");
   const [selectedCity, setSelectedCity] = useState("Karachi");
   const [selectedMode] = useState("HOME");
 
-  const popularSubjects = [
-    "O Level Mathematics",
-    "A Level Physics",
-    "MDCAT Prep",
-    "Female Tutors",
-    "Grade 1-8 All Subjects",
-    "Python Coding",
-    "Quran & Islamic Studies",
+  const popularSearches = [
+    { label: "O Level Mathematics", grade: "o_level", subject: "mathematics" },
+    { label: "A Level Physics", grade: "a_level", subject: "physics" },
+    { label: "MDCAT Prep", grade: "mdcat", subject: "mdcat_biology" },
+    { label: "Primary Grades 1–3", grade: "primary_1_3", subject: "" },
+    { label: "Matric Science", grade: "matric_9_10", subject: "physics" },
+    { label: "Quran & Islamic Studies", grade: "primary_1_3", subject: "quran_studies" },
   ];
 
   const tutorBadgeText =
@@ -54,7 +55,8 @@ export default function RedesignedLightLandingPage() {
   const handleHeroSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const query = new URLSearchParams();
-    if (searchSubject) query.set("subject", searchSubject);
+    if (gradeLevelId) query.set("grade_level_id", gradeLevelId);
+    if (searchSubjectId) query.set("subject_ids", searchSubjectId);
     if (selectedCity) query.set("city", selectedCity);
     if (selectedMode) query.set("mode", selectedMode);
     router.push(`/parent/post-tuition?${query.toString()}`);
@@ -70,17 +72,18 @@ export default function RedesignedLightLandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
             <div className="sm:col-span-5 relative">
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1 px-1">
-                Subject or Grade
+                Grade & Subject
               </label>
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="e.g. O Level Physics, Math, MDCAT..."
-                  value={searchSubject}
-                  onChange={(e) => setSearchSubject(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3 py-3 text-xs text-slate-900 font-medium placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white transition"
-                />
+                <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 z-10 pointer-events-none" />
+                <div className="pl-8">
+                  <CatalogSearchSelect
+                    gradeLevelId={gradeLevelId}
+                    subjectId={searchSubjectId}
+                    onGradeLevelChange={setGradeLevelId}
+                    onSubjectIdChange={setSearchSubjectId}
+                  />
+                </div>
               </div>
             </div>
 
@@ -113,19 +116,23 @@ export default function RedesignedLightLandingPage() {
 
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
             <span className="font-bold text-slate-500 mr-1">Popular:</span>
-            {popularSubjects.map((sub) => (
+            {popularSearches.map((item) => (
               <button
-                key={sub}
+                key={item.label}
                 type="button"
                 onClick={() => {
-                  setSearchSubject(sub);
-                  router.push(
-                    `/parent/post-tuition?subject=${encodeURIComponent(sub)}&city=${encodeURIComponent(selectedCity)}`
-                  );
+                  setGradeLevelId(item.grade);
+                  setSearchSubjectId(item.subject);
+                  const q = new URLSearchParams({
+                    grade_level_id: item.grade,
+                    city: selectedCity,
+                  });
+                  if (item.subject) q.set("subject_ids", item.subject);
+                  router.push(`/parent/post-tuition?${q.toString()}`);
                 }}
                 className="px-3 py-1 rounded-full bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 font-medium transition border border-slate-200/80"
               >
-                {sub}
+                {item.label}
               </button>
             ))}
           </div>
@@ -257,7 +264,7 @@ export default function RedesignedLightLandingPage() {
                         </span>
                       </div>
                       <Link
-                        href={`/parent/post-tuition?subject=${encodeURIComponent((tutor.subjects || [])[0] || "")}&city=${encodeURIComponent(tutor.city)}`}
+                        href={`/parent/post-tuition?grade_level_id=o_level&subject_ids=${encodeURIComponent((tutor.subject_ids || [])[0] || "mathematics")}&city=${encodeURIComponent(tutor.city)}`}
                         className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-md shadow-indigo-600/20 text-center block"
                       >
                         Book 2 Free Demo Classes

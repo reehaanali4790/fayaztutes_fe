@@ -58,6 +58,8 @@ export interface TutorProfile {
   education_level: string;
   preferred_mode: string;
   subjects: string[];
+  subject_ids?: string[];
+  teaching_grade_ids?: string[];
   hourly_rate_min: number;
   hourly_rate_max: number;
   monthly_rate_expected: number;
@@ -85,6 +87,7 @@ export interface ResumeParseResult {
   education: EducationEntry[];
   work_experience: WorkExperienceEntry[];
   subjects_can_teach: string[];
+  subject_ids?: string[];
   board_qualifications: BoardQualificationEntry[];
   resume_filename?: string;
 }
@@ -95,7 +98,9 @@ export interface TuitionLead {
   tuition_code: string;
   title: string;
   grade_level: string;
+  grade_level_id?: string;
   subjects: string[];
+  subject_ids?: string[];
   curriculum: string;
   teaching_mode: string;
   city: string;
@@ -177,6 +182,31 @@ export interface KYCQueueItem {
   cnic_verified: boolean;
   education_level: string;
   subjects: string[];
+}
+
+export interface CatalogSubject {
+  id: string;
+  name: string;
+  group_id?: string | null;
+}
+
+export interface CatalogGroup {
+  id: string | null;
+  label: string;
+  subjects: CatalogSubject[];
+}
+
+export interface CatalogGrade {
+  id: string;
+  label: string;
+  groups: CatalogGroup[];
+}
+
+export interface CatalogCurriculum {
+  id: string;
+  label: string;
+  description?: string | null;
+  grades: CatalogGrade[];
 }
 
 export async function fetchJson<T>(path: string, token?: string | null): Promise<T> {

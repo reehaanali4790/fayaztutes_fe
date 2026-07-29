@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { AuthBrandPanel } from "@/components/layout/AuthBrandPanel";
 import { Button } from "@/components/ui/Button";
+import { SubjectPicker } from "@/components/catalog/SubjectPicker";
 import { GraduationCap, ArrowLeft } from "lucide-react";
 
 export default function TutorSignupPage() {
@@ -19,7 +20,9 @@ export default function TutorSignupPage() {
   const [phone, setPhone] = useState("");
   const [cnic, setCnic] = useState("");
   const [city, setCity] = useState("Karachi");
-  const [subjects, setSubjects] = useState("O Level Math, Physics, Computer Science");
+  const [gradeLevelId, setGradeLevelId] = useState("o_level");
+  const [subjectIds, setSubjectIds] = useState<string[]>([]);
+  const [teachingGradeIds, setTeachingGradeIds] = useState<string[]>(["o_level"]);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -30,11 +33,13 @@ export default function TutorSignupPage() {
       setErrorMsg("Passwords do not match. Please re-enter.");
       return;
     }
+    if (subjectIds.length === 0) {
+      setErrorMsg("Please select at least one subject you can teach.");
+      return;
+    }
 
     setLoading(true);
     setErrorMsg("");
-
-    const subjectList = subjects.split(",").map(s => s.trim()).filter(Boolean);
 
     const result = await signup({
       email,
@@ -43,7 +48,8 @@ export default function TutorSignupPage() {
       phone,
       role: "TUTOR",
       city,
-      subjects: subjectList
+      subject_ids: subjectIds,
+      teaching_grade_ids: teachingGradeIds.length ? teachingGradeIds : [gradeLevelId],
     });
 
     setLoading(false);
@@ -154,14 +160,15 @@ export default function TutorSignupPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Subjects You Can Teach</label>
-                <input
-                  type="text"
-                  value={subjects}
-                  onChange={(e) => setSubjects(e.target.value)}
-                  placeholder="e.g. O Level Math, Physics, Computer Science"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition"
-                  required
+                <label className="text-xs font-bold text-slate-700">Subjects You Can Teach *</label>
+                <SubjectPicker
+                  gradeLevelId={gradeLevelId}
+                  subjectIds={subjectIds}
+                  onGradeLevelChange={setGradeLevelId}
+                  onSubjectIdsChange={setSubjectIds}
+                  teachingGradeIds={teachingGradeIds}
+                  onTeachingGradeIdsChange={setTeachingGradeIds}
+                  accumulateAcrossGrades
                 />
               </div>
 

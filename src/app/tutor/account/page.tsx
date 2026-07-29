@@ -36,6 +36,7 @@ import {
   getGroupsForBoard,
   type BoardId,
 } from "@/lib/pakistaniBoards";
+import { SubjectPicker } from "@/components/catalog/SubjectPicker";
 
 function SectionCard({
   title,
@@ -71,8 +72,9 @@ export default function AccountSettingsPage() {
   const [bio, setBio] = useState("");
   const [city, setCity] = useState("Karachi");
   const [experienceYears, setExperienceYears] = useState(0);
-  const [subjects, setSubjects] = useState<string[]>([]);
-  const [newSubjectInput, setNewSubjectInput] = useState("");
+  const [gradeLevelId, setGradeLevelId] = useState("o_level");
+  const [subjectIds, setSubjectIds] = useState<string[]>([]);
+  const [teachingGradeIds, setTeachingGradeIds] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkillInput, setNewSkillInput] = useState("");
   const [certificates, setCertificates] = useState<CertificateEntry[]>([]);
@@ -103,7 +105,9 @@ export default function AccountSettingsPage() {
     setBio(profile.bio || "");
     setCity(profile.city || "Karachi");
     setExperienceYears(profile.experience_years ?? 0);
-    setSubjects(profile.subjects || []);
+    setSubjectIds(profile.subject_ids || []);
+    setTeachingGradeIds(profile.teaching_grade_ids || []);
+    if (profile.teaching_grade_ids?.[0]) setGradeLevelId(profile.teaching_grade_ids[0]);
     setSkills(profile.skills || []);
     setCertificates(profile.certificates || []);
     setEducation(profile.education || []);
@@ -126,8 +130,10 @@ export default function AccountSettingsPage() {
     if (parsed.education?.length) setEducation(parsed.education);
     if (parsed.work_experience?.length) setWorkExperience(parsed.work_experience);
     if (parsed.board_qualifications?.length) setBoardQualifications(parsed.board_qualifications);
-    if (parsed.subjects_can_teach?.length) {
-      setSubjects((prev) => [...new Set([...prev, ...parsed.subjects_can_teach])]);
+    if (parsed.subject_ids?.length) {
+      setSubjectIds((prev) => [...new Set([...prev, ...parsed.subject_ids!])]);
+    } else if (parsed.subjects_can_teach?.length) {
+      setSubjectIds((prev) => [...new Set([...prev, ...parsed.subjects_can_teach])]);
     }
     if (parsed.resume_filename) setResumeFilename(parsed.resume_filename);
     setParseSuccess(true);
@@ -165,7 +171,8 @@ export default function AccountSettingsPage() {
             bio,
             city,
             experience_years: experienceYears,
-            subjects,
+            subject_ids: subjectIds,
+            teaching_grade_ids: teachingGradeIds.length ? teachingGradeIds : [gradeLevelId],
             skills,
             certificates,
             education,
@@ -413,19 +420,16 @@ export default function AccountSettingsPage() {
 
         {/* Teaching Subjects */}
         <SectionCard title="Subjects You Can Teach" icon={GraduationCap}>
-          <div className="flex flex-wrap gap-2 bg-slate-50 p-4 rounded-2xl border border-slate-200 min-h-[60px]">
-            {subjects.length === 0 && <p className="text-xs text-slate-500">Add subjects from board qualifications or manually.</p>}
-            {subjects.map((sub) => (
-              <span key={sub} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-slate-800 text-xs font-semibold border border-slate-200">
-                {sub}
-                <button type="button" onClick={() => setSubjects(subjects.filter((s) => s !== sub))}><X className="w-3 h-3 text-red-500" /></button>
-              </span>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <input value={newSubjectInput} onChange={(e) => setNewSubjectInput(e.target.value)} placeholder="Add subject manually..." className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs" />
-            <button type="button" onClick={() => { if (newSubjectInput.trim() && !subjects.includes(newSubjectInput.trim())) { setSubjects([...subjects, newSubjectInput.trim()]); setNewSubjectInput(""); } }} className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl">Add</button>
-          </div>
+          <p className="text-xs text-slate-500 mb-3">Pick subjects from the official catalog — same lists parents use when posting tuition.</p>
+          <SubjectPicker
+            gradeLevelId={gradeLevelId}
+            subjectIds={subjectIds}
+            onGradeLevelChange={setGradeLevelId}
+            onSubjectIdsChange={setSubjectIds}
+            teachingGradeIds={teachingGradeIds}
+            onTeachingGradeIdsChange={setTeachingGradeIds}
+            accumulateAcrossGrades
+          />
         </SectionCard>
 
         {/* Bank */}

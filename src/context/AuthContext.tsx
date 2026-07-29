@@ -15,7 +15,17 @@ interface AuthContextType {
   currentPanel: "PARENT" | "TUTOR" | "ADMIN" | "VISITOR";
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; role?: UserSession["role"] }>;
-  signup: (data: { email: string; password: string; full_name: string; role: string; phone?: string; city?: string; subjects?: string[] }) => Promise<{ success: boolean; error?: string; role?: UserSession["role"] }>;
+  signup: (data: {
+    email: string;
+    password: string;
+    full_name: string;
+    role: string;
+    phone?: string;
+    city?: string;
+    subjects?: string[];
+    subject_ids?: string[];
+    teaching_grade_ids?: string[];
+  }) => Promise<{ success: boolean; error?: string; role?: UserSession["role"] }>;
   logout: () => void;
   switchPanel: (panel: "PARENT" | "TUTOR" | "ADMIN" | "VISITOR") => void;
 }
@@ -77,7 +87,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signup = async (data: { email: string; password: string; full_name: string; role: string; phone?: string; city?: string; subjects?: string[] }) => {
+  const signup = async (data: {
+    email: string;
+    password: string;
+    full_name: string;
+    role: string;
+    phone?: string;
+    city?: string;
+    subjects?: string[];
+    subject_ids?: string[];
+    teaching_grade_ids?: string[];
+  }) => {
     const cleanEmail = data.email.toLowerCase().trim();
 
     if (data.password.length < 8) {
