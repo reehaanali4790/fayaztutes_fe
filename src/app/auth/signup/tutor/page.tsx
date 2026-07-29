@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { AuthBrandPanel } from "@/components/layout/AuthBrandPanel";
 import { Button } from "@/components/ui/Button";
-import { SubjectPicker } from "@/components/catalog/SubjectPicker";
+import { markTutorOnboardingPending } from "@/lib/tutorOnboarding";
 import { GraduationCap, ArrowLeft } from "lucide-react";
 
 export default function TutorSignupPage() {
@@ -20,9 +20,6 @@ export default function TutorSignupPage() {
   const [phone, setPhone] = useState("");
   const [cnic, setCnic] = useState("");
   const [city, setCity] = useState("Karachi");
-  const [gradeLevelId, setGradeLevelId] = useState("o_level");
-  const [subjectIds, setSubjectIds] = useState<string[]>([]);
-  const [teachingGradeIds, setTeachingGradeIds] = useState<string[]>(["o_level"]);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -31,10 +28,6 @@ export default function TutorSignupPage() {
     e.preventDefault();
     if (password !== confirmPassword) {
       setErrorMsg("Passwords do not match. Please re-enter.");
-      return;
-    }
-    if (subjectIds.length === 0) {
-      setErrorMsg("Please select at least one subject you can teach.");
       return;
     }
 
@@ -48,14 +41,13 @@ export default function TutorSignupPage() {
       phone,
       role: "TUTOR",
       city,
-      subject_ids: subjectIds,
-      teaching_grade_ids: teachingGradeIds.length ? teachingGradeIds : [gradeLevelId],
     });
 
     setLoading(false);
     if (result.success) {
       switchPanel("TUTOR");
-      router.push("/tutor");
+      markTutorOnboardingPending();
+      router.push("/tutor/account?onboarding=1");
     } else {
       setErrorMsg(result.error || "Registration failed. Please try again.");
     }
@@ -80,7 +72,7 @@ export default function TutorSignupPage() {
               Create Tutor Account
             </h2>
             <p className="text-xs text-slate-500">
-              Fill in your academic details to start receiving tuition leads.
+              Sign up with your basic details — you&apos;ll build your teaching profile right after.
             </p>
           </div>
 
@@ -159,19 +151,6 @@ export default function TutorSignupPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Subjects You Can Teach *</label>
-                <SubjectPicker
-                  gradeLevelId={gradeLevelId}
-                  subjectIds={subjectIds}
-                  onGradeLevelChange={setGradeLevelId}
-                  onSubjectIdsChange={setSubjectIds}
-                  teachingGradeIds={teachingGradeIds}
-                  onTeachingGradeIdsChange={setTeachingGradeIds}
-                  accumulateAcrossGrades
-                />
-              </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700">Create Password *</label>
@@ -199,7 +178,7 @@ export default function TutorSignupPage() {
               </div>
 
               <Button type="submit" disabled={loading} className="w-full" size="lg">
-                {loading ? "Registering Profile..." : "Complete Tutor Registration"}
+                {loading ? "Creating account..." : "Create Account & Build Profile"}
               </Button>
 
               <div className="flex items-center justify-center gap-3 pt-2 text-[11px] text-slate-500 font-medium">

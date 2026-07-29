@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   apiFetch,
   uploadResumeForParsing,
@@ -37,6 +38,11 @@ import {
   type BoardId,
 } from "@/lib/pakistaniBoards";
 import { SubjectPicker } from "@/components/catalog/SubjectPicker";
+import {
+  clearTutorOnboardingPending,
+  isTutorOnboardingPending,
+  isTutorProfileIncomplete,
+} from "@/lib/tutorOnboarding";
 
 function SectionCard({
   title,
@@ -64,6 +70,18 @@ function SectionCard({
 }
 
 export default function AccountSettingsPage() {
+  return (
+    <React.Suspense fallback={<div className="p-8 text-center text-sm text-slate-500">Loading profile...</div>}>
+      <AccountSettingsContent />
+    </React.Suspense>
+  );
+}
+
+function AccountSettingsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isOnboarding =
+    searchParams.get("onboarding") === "1" || isTutorOnboardingPending();
   const { token, user } = useAuth();
   const { profile, loading, setProfile } = useTutorProfile();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -161,6 +179,18 @@ export default function AccountSettingsPage() {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaveError("");
+
+    if (isOnboarding) {
+      if (!headline.trim() && !bio.trim()) {
+        setSaveError("Add a headline or short bio so parents know who you are.");
+        return;
+      }
+      if (subjectIds.length === 0) {
+        setSaveError("Select at least one subject you can teach.");
+        return;
+      }
+    }
+
     try {
       const res = await apiFetch(
         "/tutors/me/profile",
@@ -193,7 +223,12 @@ export default function AccountSettingsPage() {
       const updated = await res.json();
       setProfile(updated);
       setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 3000);
+      if (isOnboarding && !isTutorProfileIncomplete(updated)) {
+        clearTutorOnboardingPending();
+        setTimeout(() => router.push("/tutor"), 1200);
+      } else {
+        setTimeout(() => setSavedSuccess(false), 3000);
+      }
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Failed to save");
     }
@@ -248,11 +283,21 @@ export default function AccountSettingsPage() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto pb-10">
       <div>
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Edit Profile</h1>
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+          {isOnboarding ? "Complete Your Tutor Profile" : "Edit Profile"}
+        </h1>
         <p className="text-slate-500 text-sm mt-1">
-          Upload your resume to auto-fill, or complete each section manually. Experience years come from your work history — not a default.
+          {isOnboarding
+            ? "Welcome! Add your subjects, experience, and bio so parents can find and trust you. Experience years are based on your work history — never a default."
+            : "Upload your resume to auto-fill, or complete each section manually. Experience years come from your work history — not a default."}
         </p>
       </div>
+
+      {isOnboarding && (
+        <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl text-indigo-900 text-sm">
+          <strong>Step 1 of onboarding:</strong> Complete your profile below, then you can browse tuition leads and apply.
+        </div>
+      )}
 
       {loading && <p className="text-sm text-slate-500">Loading profile...</p>}
 
@@ -459,7 +504,7 @@ export default function AccountSettingsPage() {
         </SectionCard>
 
         <button type="submit" className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm shadow-lg">
-          Save Profile
+          {isOnboarding ? "Save Profile & Go to Dashboard" : "Save Profile"}
         </button>
       </form>
 

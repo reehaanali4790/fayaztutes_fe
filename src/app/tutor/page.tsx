@@ -49,9 +49,12 @@ export default function TutorHomePage() {
             <div className="text-xs text-slate-600 space-y-1">
               <div><strong>{activeApps.length}</strong> active applications</div>
               <div>
-                <strong>{profile.experience_years}</strong> years experience
-                {profile.experience_years === 3 && !profile.work_experience?.length && (
-                  <span className="text-amber-600 ml-1">— update in Edit Profile</span>
+                {profile.experience_years > 0 ? (
+                  <>
+                    <strong>{profile.experience_years}</strong> years experience
+                  </>
+                ) : (
+                  <span className="text-slate-500">Experience not set — add work history in Edit Profile</span>
                 )}
               </div>
               {profile.skills && profile.skills.length > 0 && (
