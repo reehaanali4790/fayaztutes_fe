@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Sparkles, Phone, LogOut } from "lucide-react";
+import { Sparkles, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 interface SiteHeaderProps {
@@ -19,17 +19,15 @@ export function SiteHeader({ showPromoBar = false }: SiteHeaderProps) {
           <div className="flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-indigo-100" />
             <span>
-              Need a tutor immediately? <strong>Get 2 Free Demo Classes</strong> with zero commitment!
+              New families get <strong>2 Free Demo Classes</strong> with every tutor match.
             </span>
           </div>
-          <a
-            href="https://wa.me/923353375337"
-            target="_blank"
-            rel="noreferrer"
-            className="hidden sm:flex items-center gap-1.5 text-white/90 font-bold hover:underline"
+          <Link
+            href="/parent/post-tuition"
+            className="hidden sm:inline-flex items-center gap-1.5 text-white font-bold hover:underline shrink-0"
           >
-            <Phone className="w-3.5 h-3.5" /> +92 335 337 5337
-          </a>
+            Request a Tutor
+          </Link>
         </div>
       )}
 
@@ -51,21 +49,21 @@ export function SiteHeader({ showPromoBar = false }: SiteHeaderProps) {
           </div>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-700">
+        <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-700">
           <Link href="/#search" className="hover:text-indigo-600 transition">
             Find Tutors
+          </Link>
+          <Link href="/how-it-works" className="hover:text-indigo-600 transition">
+            How It Works
           </Link>
           <Link href="/services" className="hover:text-indigo-600 transition">
             Services
           </Link>
           <Link href="/about" className="hover:text-indigo-600 transition">
-            About Us
+            About
           </Link>
-          <Link href="/#how-it-works" className="hover:text-indigo-600 transition">
-            How It Works
-          </Link>
-          <Link href="/terms" className="hover:text-indigo-600 transition">
-            Terms & Pricing
+          <Link href="/faq" className="hover:text-indigo-600 transition">
+            FAQ
           </Link>
         </nav>
 
@@ -106,16 +104,16 @@ export function SiteHeader({ showPromoBar = false }: SiteHeaderProps) {
                 Sign In
               </Link>
               <Link
-                href="/auth/signup/parent"
+                href="/parent/post-tuition"
                 className="hidden sm:inline-block px-4 py-2.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-xs border border-purple-200 transition"
               >
-                Parent Sign Up
+                Request Tutor
               </Link>
               <Link
                 href="/auth/signup/tutor"
                 className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition"
               >
-                Tutor Sign Up
+                Become a Tutor
               </Link>
             </div>
           )}

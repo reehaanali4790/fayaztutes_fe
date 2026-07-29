@@ -8,7 +8,6 @@ import {
   Sparkles,
   Heart,
   MapPin,
-  Phone,
   Mail,
 } from "lucide-react";
 import { MarketingLayout } from "@/components/layout/MarketingLayout";
@@ -72,12 +71,10 @@ export default function AboutPage() {
                 <span>2nd Floor, Building No. 5, C-46 Street, Phase V, Tauheed Commercial Area, DHA Phase 5, Karachi 75500, Pakistan.</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-indigo-600 shrink-0" />
-                <span>+92 335 337 5337</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-indigo-600 shrink-0" />
-                <span>support@fayaztutes.com</span>
+                <a href="mailto:support@fayaztutes.com" className="hover:text-indigo-600 transition">
+                  support@fayaztutes.com
+                </a>
               </div>
             </div>
             <Link
