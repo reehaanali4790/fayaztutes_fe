@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import TutorLayout from "@/components/TutorLayout";
-import { MOCK_TUITIONS, TuitionLead, apiFetch } from "@/lib/api";
+import { TuitionLead, apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { useOpenTuitions, useMyApplications } from "@/hooks/useApiData";
+import { EmptyState } from "@/components/ui/EmptyState";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { 
   Search, 
   MapPin, 
@@ -22,20 +25,15 @@ export default function RedesignedLightActiveTuitionsPage() {
   const [selectedMode, setSelectedMode] = useState<string>("ALL");
   const [selectedGender, setSelectedGender] = useState<string>("ANY");
   const [activeModalTuition, setActiveModalTuition] = useState<TuitionLead | null>(null);
-  const [appliedTuitionIds, setAppliedTuitionIds] = useState<string[]>([]);
   const [pitchNote, setPitchNote] = useState("");
   const [applySuccessMessage, setApplySuccessMessage] = useState(false);
-  const [tuitions, setTuitions] = useState<TuitionLead[]>(MOCK_TUITIONS);
-
-  useEffect(() => {
-    if (!token) return;
-    apiFetch("/tuitions?status=OPEN", {}, token)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: TuitionLead[]) => {
-        if (Array.isArray(data) && data.length > 0) setTuitions(data);
-      })
-      .catch(() => {});
-  }, [token]);
+  const [localAppliedIds, setLocalAppliedIds] = useState<string[]>([]);
+  const { tuitions, loading } = useOpenTuitions();
+  const { applications } = useMyApplications();
+  const appliedTuitionIds = [
+    ...applications.map((a) => a.tuition_id),
+    ...localAppliedIds,
+  ];
 
   const cities = ["Hyderabad", "Islamabad", "Karachi", "Lahore", "Other", "Peshawar"];
   const modes = [
@@ -88,7 +86,7 @@ export default function RedesignedLightActiveTuitionsPage() {
       // Offline fallback: still mark as applied locally
     }
 
-    setAppliedTuitionIds((prev) => [...prev, activeModalTuition.id]);
+    setLocalAppliedIds((prev) => [...prev, activeModalTuition.id]);
     setApplySuccessMessage(true);
     setTimeout(() => {
       setApplySuccessMessage(false);
@@ -98,6 +96,7 @@ export default function RedesignedLightActiveTuitionsPage() {
   };
 
   return (
+    <ProtectedRoute allowedRoles={["TUTOR", "ADMIN"]}>
     <TutorLayout>
       <div className="space-y-6 animate-in fade-in duration-300">
         <div>
@@ -215,12 +214,14 @@ export default function RedesignedLightActiveTuitionsPage() {
               <span>Updated in real-time</span>
             </div>
 
-            {filteredTuitions.length === 0 ? (
-              <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-3 shadow-xs">
-                <BookOpen className="w-12 h-12 text-slate-300 mx-auto" />
-                <div className="text-slate-800 font-bold">No tuition opportunities match your search</div>
-                <p className="text-xs text-slate-500">Try adjusting your filters or location parameters.</p>
-              </div>
+            {loading ? (
+              <p className="text-sm text-slate-500">Loading open tuitions...</p>
+            ) : filteredTuitions.length === 0 ? (
+              <EmptyState
+                icon={BookOpen}
+                title="No tuition opportunities match your search"
+                description="Try adjusting your filters or check back when new leads are posted."
+              />
             ) : (
               filteredTuitions.map((item) => {
                 const isApplied = appliedTuitionIds.includes(item.id);
@@ -357,5 +358,6 @@ export default function RedesignedLightActiveTuitionsPage() {
         )}
       </div>
     </TutorLayout>
+    </ProtectedRoute>
   );
 }

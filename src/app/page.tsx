@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { usePublicStats, useFeaturedTutors } from "@/hooks/useApiData";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { 
   Search, 
   MapPin, 
@@ -22,12 +24,14 @@ import {
   GraduationCap,
   Clock,
   User,
-  LogOut
+  LogOut,
 } from "lucide-react";
 
 export default function RedesignedLightLandingPage() {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
+  const stats = usePublicStats();
+  const { tutors: featuredTutors, loading: tutorsLoading } = useFeaturedTutors(3);
 
   const [searchSubject, setSearchSubject] = useState("");
   const [selectedCity, setSelectedCity] = useState("Karachi");
@@ -43,6 +47,15 @@ export default function RedesignedLightLandingPage() {
     "Quran & Islamic Studies"
   ];
 
+  const tutorBadgeText = stats && stats.tutor_count > 0
+    ? `${stats.tutor_count.toLocaleString()}+ Background-Verified Tutors`
+    : "Background-Verified Home & Online Tutors";
+
+  const getInitials = (name?: string) => {
+    if (!name) return "T";
+    return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  };
+
   const handleHeroSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const query = new URLSearchParams();
@@ -51,54 +64,6 @@ export default function RedesignedLightLandingPage() {
     if (selectedMode) query.set("mode", selectedMode);
     router.push(`/parent/post-tuition?${query.toString()}`);
   };
-
-  const featuredTutors = [
-    {
-      id: "t1",
-      name: "Sir Farrukh Nazeer",
-      headline: "Ex-Aitchison Faculty • O/A Level Physics Specialist",
-      city: "Karachi",
-      area: "Clifton & DHA",
-      rating: 5.0,
-      reviews: 42,
-      experience: "12 Yrs",
-      subjects: ["Physics 5054", "A Level Physics 9702", "MDCAT"],
-      rate: "Rs 40,000 / mo",
-      avatar: "FN",
-      color: "bg-indigo-600",
-      badge: "Top Educator"
-    },
-    {
-      id: "t2",
-      name: "Ms. Erum Hassam",
-      headline: "Senior Cambridge Educator • English & History Specialist",
-      city: "Karachi",
-      area: "PECHS & Gulshan",
-      rating: 5.0,
-      reviews: 35,
-      experience: "20 Yrs",
-      subjects: ["English Language", "Literature", "Primary Grades"],
-      rate: "Rs 32,000 / mo",
-      avatar: "EH",
-      color: "bg-purple-600",
-      badge: "Verified Female Tutor"
-    },
-    {
-      id: "t3",
-      name: "Sir Fayaz Ali",
-      headline: "Full-Stack Engineer • O/A Level Math & CS Expert",
-      city: "Karachi",
-      area: "DHA Phase 5",
-      rating: 4.9,
-      reviews: 24,
-      experience: "8 Yrs",
-      subjects: ["O Level Math 4024", "A Level CS 9618", "Python"],
-      rate: "Rs 35,000 / mo",
-      avatar: "FA",
-      color: "bg-blue-600",
-      badge: "Cambridge Specialist"
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-indigo-500 selection:text-white">
@@ -194,7 +159,7 @@ export default function RedesignedLightLandingPage() {
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold">
             <ShieldCheck className="w-4 h-4 text-indigo-600" />
-            3,494+ Background-Verified Home & Online Tutors
+            {tutorBadgeText}
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -277,10 +242,12 @@ export default function RedesignedLightLandingPage() {
         {/* Social Proof & Trust Badges Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 max-w-4xl mx-auto">
           <div className="bg-white border border-slate-200/80 p-5 rounded-2xl text-center space-y-1 shadow-sm">
-            <div className="flex items-center justify-center gap-1 text-amber-500 font-extrabold text-2xl">
-              4.9 <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+            <div className="text-2xl font-extrabold text-amber-500">
+              {stats && stats.avg_rating > 0 ? stats.avg_rating.toFixed(1) : "—"}
             </div>
-            <div className="text-xs text-slate-600 font-medium">Google Reviews (300+)</div>
+            <div className="text-xs text-slate-600 font-medium">
+              {stats && stats.avg_rating > 0 ? "Average Tutor Rating" : "Quality-First Matching"}
+            </div>
           </div>
 
           <div className="bg-white border border-slate-200/80 p-5 rounded-2xl text-center space-y-1 shadow-sm">
@@ -294,8 +261,12 @@ export default function RedesignedLightLandingPage() {
           </div>
 
           <div className="bg-white border border-slate-200/80 p-5 rounded-2xl text-center space-y-1 shadow-sm">
-            <div className="text-2xl font-extrabold text-purple-600">12,148+</div>
-            <div className="text-xs text-slate-600 font-medium">Families Matched</div>
+            <div className="text-2xl font-extrabold text-purple-600">
+              {stats && stats.family_count > 0 ? `${stats.family_count.toLocaleString()}+` : "Growing"}
+            </div>
+            <div className="text-xs text-slate-600 font-medium">
+              {stats && stats.family_count > 0 ? "Families Matched" : "Community of Families"}
+            </div>
           </div>
         </div>
       </section>
@@ -314,10 +285,21 @@ export default function RedesignedLightLandingPage() {
             </div>
 
             <Link href="/parent/post-tuition" className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
-              View All 3,400+ Tutors <ChevronRight className="w-4 h-4" />
+              {stats && stats.tutor_count > 0 ? `Browse ${stats.tutor_count}+ Tutors` : "Post a Tuition Request"} <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
 
+          {tutorsLoading ? (
+            <p className="text-sm text-slate-500 text-center">Loading featured tutors...</p>
+          ) : featuredTutors.length === 0 ? (
+            <EmptyState
+              icon={GraduationCap}
+              title="Be among our first verified educators"
+              description="We're building a trusted network of tutors across Pakistan."
+              actionLabel="Tutor Sign Up"
+              actionHref="/auth/signup/tutor"
+            />
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {featuredTutors.map((tutor) => (
               <div 
@@ -327,32 +309,35 @@ export default function RedesignedLightLandingPage() {
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-14 h-14 rounded-2xl ${tutor.color} text-white font-extrabold text-xl flex items-center justify-center shadow-md`}>
-                        {tutor.avatar}
+                      <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white font-extrabold text-xl flex items-center justify-center shadow-md">
+                        {getInitials(tutor.full_name)}
                       </div>
                       <div>
                         <h3 className="font-extrabold text-slate-900 text-base group-hover:text-indigo-600 transition-colors">
-                          {tutor.name}
+                          {tutor.full_name || "Verified Tutor"}
                         </h3>
-                        <div className="flex items-center gap-1.5 text-xs text-amber-500 font-bold mt-0.5">
-                          <Star className="w-3.5 h-3.5 fill-amber-400" />
-                          <span>{tutor.rating}</span>
-                          <span className="text-slate-400 font-normal">({tutor.reviews} reviews)</span>
-                        </div>
+                        {tutor.rating_count > 0 && (
+                          <div className="flex items-center gap-1.5 text-xs text-amber-500 font-bold mt-0.5">
+                            <Star className="w-3.5 h-3.5 fill-amber-400" />
+                            <span>{tutor.rating_avg}</span>
+                            <span className="text-slate-400 font-normal">({tutor.rating_count} reviews)</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-
-                    <span className="px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">
-                      {tutor.badge}
-                    </span>
+                    {tutor.cnic_verified && (
+                      <span className="px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">
+                        Verified
+                      </span>
+                    )}
                   </div>
 
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    {tutor.headline}
+                    {tutor.headline || `${tutor.education_level} — ${tutor.experience_years} yrs experience`}
                   </p>
 
                   <div className="flex flex-wrap gap-1.5">
-                    {tutor.subjects.map((sub) => (
+                    {(tutor.subjects || []).slice(0, 4).map((sub) => (
                       <span key={sub} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-[11px] font-semibold">
                         {sub}
                       </span>
@@ -362,12 +347,14 @@ export default function RedesignedLightLandingPage() {
 
                 <div className="pt-4 border-t border-slate-200/80 space-y-3">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500">Location & Rate</span>
-                    <span className="font-bold text-slate-900">{tutor.rate}</span>
+                    <span className="text-slate-500">{tutor.area || tutor.city}</span>
+                    <span className="font-bold text-slate-900">
+                      {tutor.monthly_rate_expected > 0 ? `Rs ${tutor.monthly_rate_expected.toLocaleString()} / mo` : "Rate on request"}
+                    </span>
                   </div>
 
                   <Link
-                    href={`/parent/post-tuition?subject=${encodeURIComponent(tutor.subjects[0])}&tutor=${encodeURIComponent(tutor.name)}`}
+                    href={`/parent/post-tuition?subject=${encodeURIComponent((tutor.subjects || [])[0] || "")}&city=${encodeURIComponent(tutor.city)}`}
                     className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-md shadow-indigo-600/20 text-center block"
                   >
                     Book 2 Free Demo Classes
@@ -376,6 +363,7 @@ export default function RedesignedLightLandingPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
       </section>
 

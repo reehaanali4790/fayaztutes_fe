@@ -14,8 +14,11 @@ import {
   Calendar,
   X
 } from "lucide-react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, MatchRecommendation } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { useMatchRecommendations } from "@/hooks/useApiData";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { GraduationCap } from "lucide-react";
 
 function PostTuitionWizardContent() {
   const router = useRouter();
@@ -34,9 +37,11 @@ function PostTuitionWizardContent() {
   const [genderPref, setGenderPref] = useState("ANY");
   const [offeredFee, setOfferedFee] = useState("35000");
   const [submitted, setSubmitted] = useState(false);
+  const [submittedTuitionId, setSubmittedTuitionId] = useState<string | null>(null);
+  const { matches, loading: matchesLoading } = useMatchRecommendations(submittedTuitionId);
   const [submitError, setSubmitError] = useState("");
   const [showDemoModal, setShowDemoModal] = useState(false);
-  const [selectedTutor, setSelectedTutor] = useState("Sir Fayaz Ali");
+  const [selectedMatch, setSelectedMatch] = useState<MatchRecommendation | null>(null);
   const [demoSuccess, setDemoSuccess] = useState(false);
 
   useEffect(() => {
@@ -89,14 +94,16 @@ function PostTuitionWizardContent() {
         return;
       }
 
+      const created = await res.json();
+      setSubmittedTuitionId(created.id);
       setSubmitted(true);
     } catch {
       setSubmitError("Unable to reach the server. Please check your connection and try again.");
     }
   };
 
-  const handleBookDemoModal = (tutorName: string) => {
-    setSelectedTutor(tutorName);
+  const handleBookDemoModal = (match: MatchRecommendation) => {
+    setSelectedMatch(match);
     setShowDemoModal(true);
   };
 
@@ -106,7 +113,7 @@ function PostTuitionWizardContent() {
     setTimeout(() => {
       setDemoSuccess(false);
       setShowDemoModal(false);
-      alert(`Demo class scheduled with ${selectedTutor}! Check your Parent Dashboard to launch Zoom session.`);
+      alert(`Demo booking is available from your Parent Dashboard once tutors apply to your lead.`);
     }, 1200);
   };
 
@@ -339,31 +346,48 @@ function PostTuitionWizardContent() {
             </div>
 
             <div className="space-y-4">
-              <div className="bg-white border border-indigo-200 p-6 rounded-3xl space-y-4 shadow-md">
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md">
-                      FA
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-extrabold text-slate-900 text-lg">Sir Fayaz Ali</h3>
-                        <span className="px-2.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-extrabold text-xs">98% MATCH</span>
+              {matchesLoading ? (
+                <p className="text-sm text-slate-500 text-center">Finding matched tutors...</p>
+              ) : matches.length === 0 ? (
+                <EmptyState
+                  icon={GraduationCap}
+                  title="We're matching tutors"
+                  description="Check back soon on your dashboard — verified tutors in your area will be notified."
+                  actionLabel="Go to Dashboard"
+                  actionHref="/parent/dashboard"
+                />
+              ) : (
+                matches.slice(0, 5).map((match) => (
+                  <div key={match.tutor_id} className="bg-white border border-indigo-200 p-6 rounded-2xl space-y-4 shadow-md">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-extrabold text-slate-900 text-lg">
+                            {match.headline || "Verified Tutor"}
+                          </h3>
+                          <span className="px-2.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-extrabold text-xs">
+                            {match.match_score}% MATCH
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 mt-1">
+                          {match.education_level} — {match.experience_years} yrs exp — {match.area || match.city}
+                        </p>
+                        {match.rating_count > 0 && (
+                          <div className="flex items-center gap-2 text-xs text-amber-500 font-bold mt-1">
+                            <Star className="w-4 h-4 fill-amber-400" /> {match.rating_avg} ({match.rating_count} reviews)
+                          </div>
+                        )}
+                        {match.match_reasons.length > 0 && (
+                          <p className="text-xs text-slate-500 mt-2">{match.match_reasons.join(" · ")}</p>
+                        )}
                       </div>
-                      <p className="text-xs text-slate-600">Cambridge O/A Level Math & Physics Specialist • B.S. CS (8 Yrs Exp)</p>
-                      <div className="flex items-center gap-2 text-xs text-amber-500 font-bold mt-1">
-                        <Star className="w-4 h-4 fill-amber-400" /> 4.9 Rating (24 Reviews) • {area}, {city}
-                      </div>
+                      <Link href="/parent/dashboard" className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shrink-0">
+                        View on Dashboard
+                      </Link>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleBookDemoModal("Sir Fayaz Ali")}
-                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md"
-                  >
-                    Book 2 Free Demo Classes
-                  </button>
-                </div>
-              </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -384,7 +408,7 @@ function PostTuitionWizardContent() {
                   2 Free Demo Classes Booking
                 </div>
                 <h3 className="text-xl font-extrabold text-slate-900">
-                  Schedule Demo with {selectedTutor}
+                  Schedule Demo
                 </h3>
               </div>
 
