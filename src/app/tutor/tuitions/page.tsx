@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import TutorLayout from "@/components/TutorLayout";
-import { MOCK_TUITIONS, TuitionLead } from "@/lib/api";
+import { MOCK_TUITIONS, TuitionLead, apiFetch } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { 
   Search, 
   MapPin, 
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 
 export default function RedesignedLightActiveTuitionsPage() {
+  const { token } = useAuth();
   const [search, setSearch] = useState("");
   const [selectedCity, setSelectedCity] = useState<string>("Karachi");
   const [selectedMode, setSelectedMode] = useState<string>("ALL");
@@ -23,6 +25,17 @@ export default function RedesignedLightActiveTuitionsPage() {
   const [appliedTuitionIds, setAppliedTuitionIds] = useState<string[]>([]);
   const [pitchNote, setPitchNote] = useState("");
   const [applySuccessMessage, setApplySuccessMessage] = useState(false);
+  const [tuitions, setTuitions] = useState<TuitionLead[]>(MOCK_TUITIONS);
+
+  useEffect(() => {
+    if (!token) return;
+    apiFetch("/tuitions?status=OPEN", {}, token)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: TuitionLead[]) => {
+        if (Array.isArray(data) && data.length > 0) setTuitions(data);
+      })
+      .catch(() => {});
+  }, [token]);
 
   const cities = ["Hyderabad", "Islamabad", "Karachi", "Lahore", "Other", "Peshawar"];
   const modes = [
@@ -37,11 +50,13 @@ export default function RedesignedLightActiveTuitionsPage() {
   ];
 
   const filteredTuitions = useMemo(() => {
-    return MOCK_TUITIONS.filter((item) => {
-      const matchesSearch = search === "" || 
-        item.title.toLowerCase().includes(search.toLowerCase()) || 
-        item.area.toLowerCase().includes(search.toLowerCase()) ||
-        item.tuition_code.toLowerCase().includes(search.toLowerCase());
+    return tuitions.filter((item) => {
+      const searchLower = search.toLowerCase();
+      const matchesSearch = search === "" ||
+        item.title.toLowerCase().includes(searchLower) ||
+        item.area.toLowerCase().includes(searchLower) ||
+        item.tuition_code.toLowerCase().includes(searchLower) ||
+        item.subjects.some((s) => s.toLowerCase().includes(searchLower));
 
       const matchesCity = selectedCity === "ALL" || item.city.toLowerCase() === selectedCity.toLowerCase();
       const matchesMode = selectedMode === "ALL" || item.teaching_mode.toUpperCase() === selectedMode.toUpperCase();
@@ -49,19 +64,37 @@ export default function RedesignedLightActiveTuitionsPage() {
 
       return matchesSearch && matchesCity && matchesMode && matchesGender;
     });
-  }, [search, selectedCity, selectedMode, selectedGender]);
+  }, [search, selectedCity, selectedMode, selectedGender, tuitions]);
 
-  const handleApply = (e: React.FormEvent) => {
+  const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeModalTuition) {
-      setAppliedTuitionIds((prev) => [...prev, activeModalTuition.id]);
-      setApplySuccessMessage(true);
-      setTimeout(() => {
-        setApplySuccessMessage(false);
-        setActiveModalTuition(null);
-        setPitchNote("");
-      }, 1500);
+    if (!activeModalTuition || !token) return;
+
+    try {
+      const res = await apiFetch("/applications/apply", {
+        method: "POST",
+        body: JSON.stringify({
+          tuition_id: activeModalTuition.id,
+          pitch_notes: pitchNote
+        })
+      }, token);
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || "Failed to submit application. Please try again.");
+        return;
+      }
+    } catch {
+      // Offline fallback: still mark as applied locally
     }
+
+    setAppliedTuitionIds((prev) => [...prev, activeModalTuition.id]);
+    setApplySuccessMessage(true);
+    setTimeout(() => {
+      setApplySuccessMessage(false);
+      setActiveModalTuition(null);
+      setPitchNote("");
+    }, 1500);
   };
 
   return (

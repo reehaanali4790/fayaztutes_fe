@@ -30,22 +30,16 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMsg("");
 
-    const success = await login(email, password);
+    const result = await login(email, password);
     setLoading(false);
 
-    if (success) {
-      if (email.includes("parent")) {
-        switchPanel("PARENT");
-        router.push("/parent/dashboard");
-      } else if (email.includes("admin")) {
-        switchPanel("ADMIN");
-        router.push("/admin");
-      } else {
-        switchPanel("TUTOR");
-        router.push("/tutor");
-      }
+    if (result.success && result.role) {
+      switchPanel(result.role);
+      if (result.role === "PARENT") router.push("/parent/dashboard");
+      else if (result.role === "ADMIN") router.push("/admin");
+      else router.push("/tutor");
     } else {
-      setErrorMsg("Invalid email or password. Please check your credentials or register a new account.");
+      setErrorMsg(result.error || "Invalid email or password. Please check your credentials or register a new account.");
     }
   };
 

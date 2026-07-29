@@ -49,7 +49,7 @@ export default function TutorSignupPage() {
 
     const subjectList = subjects.split(",").map(s => s.trim()).filter(Boolean);
 
-    const success = await signup({
+    const result = await signup({
       email,
       password,
       full_name: fullName,
@@ -60,9 +60,11 @@ export default function TutorSignupPage() {
     });
 
     setLoading(false);
-    if (success) {
+    if (result.success) {
       switchPanel("TUTOR");
       router.push("/tutor");
+    } else {
+      setErrorMsg(result.error || "Registration failed. Please try again.");
     }
   };
 

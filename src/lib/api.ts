@@ -1,4 +1,19 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+
+export async function apiFetch(
+  path: string,
+  options: RequestInit = {},
+  token?: string | null
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string> | undefined),
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+}
 
 export interface TutorProfile {
   id: string;

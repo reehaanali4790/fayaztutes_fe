@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { 
   Sparkles, 
   CheckCircle2, 
@@ -14,8 +14,12 @@ import {
   Calendar,
   X
 } from "lucide-react";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 function PostTuitionWizardContent() {
+  const router = useRouter();
+  const { token, isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
   const initialSubject = searchParams.get("subject") || "O Level / Cambridge";
   const initialCity = searchParams.get("city") || "Karachi";
@@ -30,6 +34,7 @@ function PostTuitionWizardContent() {
   const [genderPref, setGenderPref] = useState("ANY");
   const [offeredFee, setOfferedFee] = useState("35000");
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [selectedTutor, setSelectedTutor] = useState("Sir Fayaz Ali");
   const [demoSuccess, setDemoSuccess] = useState(false);
@@ -45,34 +50,49 @@ function PostTuitionWizardContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (parseInt(offeredFee) < 5000) {
+    const fee = parseInt(offeredFee, 10);
+    if (isNaN(fee) || fee < 5000) {
       alert("Monthly tuition fee must be at least Rs 5,000 PKR.");
       return;
     }
 
-    try {
-      await fetch("http://localhost:8000/api/v1/tuitions/post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: `Grade: ${grade} Subject: ${subjects}`,
-          grade_level: grade,
-          subjects: [subjects],
-          curriculum: "Cambridge",
-          teaching_mode: mode,
-          city: city,
-          area: area,
-          preferred_tutor_gender: genderPref,
-          offered_fee: parseInt(offeredFee),
-          is_negotiable: true,
-          description: `Tuition lead posted for ${grade} (${subjects}) in ${area}, ${city}.`
-        })
-      });
-    } catch (err) {
-      console.log("Mock lead submission saved locally");
+    if (!token || !isAuthenticated) {
+      setSubmitError("Please sign in as a parent to post a tuition request.");
+      router.push("/auth/login");
+      return;
     }
 
-    setSubmitted(true);
+    setSubmitError("");
+    const payload = {
+      title: `Grade: ${grade} Subject: ${subjects}`,
+      grade_level: grade,
+      subjects: subjects.split(",").map((s) => s.trim()).filter(Boolean),
+      curriculum: "Cambridge",
+      teaching_mode: mode,
+      city: city,
+      area: area,
+      preferred_tutor_gender: genderPref,
+      offered_fee: fee,
+      is_negotiable: true,
+      description: `Tuition lead posted for ${grade} (${subjects}) in ${area}, ${city}.`
+    };
+
+    try {
+      const res = await apiFetch("/tuitions/post", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      }, token);
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setSubmitError(err.detail || "Failed to post tuition request. Please try again.");
+        return;
+      }
+
+      setSubmitted(true);
+    } catch {
+      setSubmitError("Unable to reach the server. Please check your connection and try again.");
+    }
   };
 
   const handleBookDemoModal = (tutorName: string) => {
@@ -108,6 +128,14 @@ function PostTuitionWizardContent() {
       </header>
 
       <main className="flex-1 p-6 lg:p-12 max-w-4xl mx-auto w-full">
+        {!isAuthenticated && (
+          <div className="bg-amber-50 border border-amber-200 p-6 rounded-3xl text-center space-y-3 mb-6">
+            <p className="text-sm font-bold text-amber-900">Sign in required to post a tuition request.</p>
+            <Link href="/auth/login" className="inline-block px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs">
+              Sign In as Parent
+            </Link>
+          </div>
+        )}
         {!submitted ? (
           <div className="bg-white border border-slate-200 rounded-3xl p-6 lg:p-10 space-y-8 shadow-xl animate-in fade-in duration-300">
             <div>
@@ -261,6 +289,11 @@ function PostTuitionWizardContent() {
               )}
 
               {/* Controls */}
+              {submitError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-bold p-3 rounded-xl">
+                  {submitError}
+                </div>
+              )}
               <div className="flex items-center justify-between pt-4 border-t border-slate-200">
                 {step > 1 ? (
                   <button

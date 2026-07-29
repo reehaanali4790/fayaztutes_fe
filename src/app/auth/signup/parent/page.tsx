@@ -45,7 +45,7 @@ export default function ParentSignupPage() {
     setLoading(true);
     setErrorMsg("");
 
-    const success = await signup({
+    const result = await signup({
       email,
       password,
       full_name: fullName,
@@ -55,9 +55,11 @@ export default function ParentSignupPage() {
     });
 
     setLoading(false);
-    if (success) {
+    if (result.success) {
       switchPanel("PARENT");
       router.push("/parent/post-tuition");
+    } else {
+      setErrorMsg(result.error || "Registration failed. Please try again.");
     }
   };
 

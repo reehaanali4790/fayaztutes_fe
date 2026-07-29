@@ -2,10 +2,12 @@
 
 import React, { useState } from "react";
 import TutorLayout from "@/components/TutorLayout";
-import { MOCK_PROFILE } from "@/lib/api";
+import { MOCK_PROFILE, apiFetch } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { ShieldCheck, X, CheckCircle2, CreditCard } from "lucide-react";
 
 export default function RedesignedLightAccountSettingsPage() {
+  const { token } = useAuth();
   const [name, setName] = useState("Fayaz Ali");
   const [email, setEmail] = useState("alifayaz455@gmail.com");
   const [subjects, setSubjects] = useState<string[]>(MOCK_PROFILE.subjects);
@@ -15,6 +17,11 @@ export default function RedesignedLightAccountSettingsPage() {
   const [accountNumber, setAccountNumber] = useState("PK36MEZN00010982347101");
   const [accountTitle, setAccountTitle] = useState("Fayaz Ali");
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const handleRemoveSubject = (subToRemove: string) => {
     setSubjects(subjects.filter((s) => s !== subToRemove));
@@ -28,10 +35,72 @@ export default function RedesignedLightAccountSettingsPage() {
     }
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+    try {
+      const res = await apiFetch("/tutors/me/profile", {
+        method: "PUT",
+        body: JSON.stringify({
+          subjects,
+          preferred_mode: mode,
+          bank_name: bankName,
+          bank_account_number: accountNumber,
+          account_title: accountTitle,
+        }),
+      }, token);
+
+      if (res.ok) {
+        setSavedSuccess(true);
+        setTimeout(() => setSavedSuccess(false), 3000);
+      }
+    } catch {
+      // keep local state on offline
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+
+    if (newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+    if (!currentPassword) {
+      setPasswordError("Please enter your current password.");
+      return;
+    }
+
+    try {
+      const res = await apiFetch("/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword,
+        }),
+      }, token);
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setPasswordError(err.detail || "Failed to update password.");
+        return;
+      }
+
+      setShowPasswordModal(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    } catch {
+      setPasswordError("Unable to reach the server. Please try again.");
+    }
   };
 
   return (
@@ -99,6 +168,7 @@ export default function RedesignedLightAccountSettingsPage() {
                 />
                 <button 
                   type="button"
+                  onClick={() => setShowPasswordModal(true)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-indigo-600 hover:underline font-bold"
                 >
                   Change
@@ -227,6 +297,63 @@ export default function RedesignedLightAccountSettingsPage() {
             Save Account Settings
           </button>
         </form>
+
+        {showPasswordModal && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+              <h3 className="text-lg font-extrabold text-slate-900">Change Password</h3>
+              {passwordError && (
+                <p className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl p-2">
+                  {passwordError}
+                </p>
+              )}
+              <form onSubmit={handlePasswordChange} className="space-y-3">
+                <input
+                  type="password"
+                  placeholder="Current password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs"
+                  required
+                />
+                <input
+                  type="password"
+                  placeholder="New password (min 8 chars)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs"
+                  required
+                />
+                <input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs"
+                  required
+                />
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordModal(false);
+                      setPasswordError("");
+                    }}
+                    className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-bold text-xs"
+                  >
+                    Update Password
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </TutorLayout>
   );
