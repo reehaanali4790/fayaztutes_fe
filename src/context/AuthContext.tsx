@@ -8,6 +8,7 @@ import {
   writeStoredSession,
 } from "@/lib/authSession";
 import { clearTutorOnboardingPending } from "@/lib/tutorOnboarding";
+import { API_BASE_URL } from "@/lib/api";
 
 export interface UserSession {
   id: string;
@@ -39,9 +40,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
   const [token, setToken] = useState<string | null>(null);

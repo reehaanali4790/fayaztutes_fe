@@ -1,4 +1,11 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+function resolveApiBaseUrl(): string {
+  const raw = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1").trim().replace(/\/+$/, "");
+  // Backend routes live under /api/v1 — accept either form of NEXT_PUBLIC_API_URL
+  if (raw.endsWith("/api/v1")) return raw;
+  return `${raw}/api/v1`;
+}
+
+export const API_BASE_URL = resolveApiBaseUrl();
 
 export async function apiFetch(
   path: string,
