@@ -193,7 +193,7 @@ function PostTuitionWizardContent() {
                         onChange={(e) => setMode(e.target.value)}
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-900"
                       >
-                        <option value="HOME">Home Tuition (In-Person)</option>
+                        <option value="HOME">Visiting Clients (In-Person)</option>
                         <option value="ONLINE">Online Tuition (Zoom / Meet)</option>
                       </select>
                     </div>

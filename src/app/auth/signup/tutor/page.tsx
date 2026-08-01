@@ -41,6 +41,7 @@ export default function TutorSignupPage() {
       phone,
       role: "TUTOR",
       city,
+      cnic,
     });
 
     setLoading(false);

@@ -8,6 +8,7 @@ import { PageSection } from "@/components/layout/PageSection";
 import { MarketingPageHero } from "@/components/marketing/MarketingPageHero";
 import { AnimatedSection } from "@/components/marketing/AnimatedSection";
 import { Button } from "@/components/ui/Button";
+import { WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/teachingOptions";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -55,6 +56,21 @@ export default function ContactPage() {
                       <p className="text-slate-600 text-xs leading-relaxed">
                         2nd Floor, Building No. 5, DHA Phase 5, Karachi, Pakistan
                       </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <MessageCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold text-slate-900">WhatsApp</div>
+                      <a
+                        href={`${WHATSAPP_URL}?text=${encodeURIComponent("Hi FayazTutes! I have a question.")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-600 hover:text-emerald-700 transition font-semibold"
+                      >
+                        {WHATSAPP_DISPLAY}
+                      </a>
+                      <p className="text-[11px] text-slate-500 mt-1">Chat with our team anytime.</p>
                     </div>
                   </div>
                 </div>

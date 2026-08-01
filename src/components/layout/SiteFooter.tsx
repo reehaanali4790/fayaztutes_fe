@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { MapPin, Mail, ShieldCheck, Lock, BadgeCheck } from "lucide-react";
+import { MapPin, Mail, ShieldCheck, Lock, BadgeCheck, MessageCircle } from "lucide-react";
+import { WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/teachingOptions";
 
 const footerLinks = {
   families: [
@@ -68,6 +69,17 @@ export function SiteFooter() {
                 <Mail className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                 <a href="mailto:support@fayaztutes.com" className="hover:text-indigo-600 transition">
                   support@fayaztutes.com
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <a
+                  href={`${WHATSAPP_URL}?text=${encodeURIComponent("Hi FayazTutes!")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-emerald-700 transition font-semibold"
+                >
+                  WhatsApp {WHATSAPP_DISPLAY}
                 </a>
               </div>
             </div>

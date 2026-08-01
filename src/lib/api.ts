@@ -26,6 +26,8 @@ export interface CertificateEntry {
   name: string;
   issuer?: string;
   year?: number;
+  kind?: string;
+  filename?: string;
 }
 
 export interface EducationEntry {
@@ -42,6 +44,8 @@ export interface WorkExperienceEntry {
   organization: string;
   start_year?: number | null;
   end_year?: number | null;
+  start_month?: number | null;
+  end_month?: number | null;
   is_current?: boolean;
   description?: string;
 }
@@ -67,11 +71,14 @@ export interface TutorProfile {
   subjects: string[];
   subject_ids?: string[];
   teaching_grade_ids?: string[];
+  teaching_systems?: string[];
+  teaching_class_levels?: string[];
   hourly_rate_min: number;
   hourly_rate_max: number;
   monthly_rate_expected: number;
   rating_avg: number;
   rating_count: number;
+  cnic_number?: string | null;
   cnic_verified: boolean;
   bank_name?: string;
   bank_account_number?: string;
@@ -82,6 +89,7 @@ export interface TutorProfile {
   work_experience?: WorkExperienceEntry[];
   board_qualifications?: BoardQualificationEntry[];
   resume_filename?: string;
+  degree_certificate_filename?: string | null;
 }
 
 export interface ResumeParseResult {
@@ -233,6 +241,24 @@ export async function uploadResumeForParsing(
   const form = new FormData();
   form.append("file", file);
   const res = await fetch(`${API_BASE_URL}/tutors/me/resume/parse`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Upload failed (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function uploadDegreeCertificate(
+  file: File,
+  token: string | null
+): Promise<{ degree_certificate_filename: string; certificates: CertificateEntry[] }> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API_BASE_URL}/tutors/me/degree-certificate`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: form,

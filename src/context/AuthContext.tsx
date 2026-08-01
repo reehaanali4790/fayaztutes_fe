@@ -30,6 +30,7 @@ interface AuthContextType {
     role: string;
     phone?: string;
     city?: string;
+    cnic?: string;
     subjects?: string[];
     subject_ids?: string[];
     teaching_grade_ids?: string[];
@@ -125,6 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: string;
     phone?: string;
     city?: string;
+    cnic?: string;
     subjects?: string[];
     subject_ids?: string[];
     teaching_grade_ids?: string[];

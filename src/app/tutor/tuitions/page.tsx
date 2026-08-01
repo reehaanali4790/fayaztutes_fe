@@ -43,7 +43,7 @@ export default function RedesignedLightActiveTuitionsPage() {
   const cities = ["Hyderabad", "Islamabad", "Karachi", "Lahore", "Other", "Peshawar"];
   const modes = [
     { label: "All Modes", value: "ALL" },
-    { label: "Home Tuition", value: "HOME" },
+    { label: "Visiting Clients", value: "HOME" },
     { label: "Online Tuition", value: "ONLINE" }
   ];
   const genders = [
@@ -244,7 +244,7 @@ export default function RedesignedLightActiveTuitionsPage() {
                               ? "bg-blue-50 text-blue-700 border-blue-200"
                               : "bg-emerald-50 text-emerald-700 border-emerald-200"
                           }`}>
-                            {item.teaching_mode === "HOME" ? "Home Tuition" : "Online Tuition"}
+                            {item.teaching_mode === "HOME" ? "Visiting" : "Online"}
                           </span>
                         </div>
                         <h2 className="text-lg font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">

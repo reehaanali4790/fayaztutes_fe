@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { CatalogProvider } from "@/hooks/useCatalog";
+import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -27,7 +28,10 @@ export default function RootLayout({
         className={`${plusJakarta.variable} antialiased bg-slate-50 text-slate-900 font-sans min-h-screen selection:bg-indigo-500 selection:text-white`}
       >
         <AuthProvider>
-          <CatalogProvider>{children}</CatalogProvider>
+          <CatalogProvider>
+            {children}
+            <WhatsAppFloat />
+          </CatalogProvider>
         </AuthProvider>
       </body>
     </html>

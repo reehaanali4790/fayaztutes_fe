@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   apiFetch,
   uploadResumeForParsing,
+  uploadDegreeCertificate,
   type CertificateEntry,
   type EducationEntry,
   type WorkExperienceEntry,
@@ -27,6 +28,7 @@ import {
   Briefcase,
   Award,
   Sparkles,
+  IdCard,
   type LucideIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
@@ -43,30 +45,51 @@ import {
   isTutorOnboardingPending,
   isTutorProfileIncomplete,
 } from "@/lib/tutorOnboarding";
+import {
+  AVAILABILITY_MODES,
+  QUALIFICATION_TYPES,
+  TEACHING_CLASS_LEVELS,
+  TEACHING_SYSTEMS,
+} from "@/lib/teachingOptions";
 
 function SectionCard({
   title,
   icon: Icon,
   children,
   action,
+  hint,
 }: {
   title: string;
   icon: LucideIcon;
   children: React.ReactNode;
   action?: React.ReactNode;
+  hint?: string;
 }) {
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <Icon className="w-4 h-4 text-indigo-600" />
-          {title}
+        <div>
+          <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Icon className="w-4 h-4 text-indigo-600" />
+            {title}
+          </div>
+          {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
         </div>
         {action}
       </div>
       {children}
     </div>
   );
+}
+
+const MONTHS = [
+  { v: 1, l: "Jan" }, { v: 2, l: "Feb" }, { v: 3, l: "Mar" }, { v: 4, l: "Apr" },
+  { v: 5, l: "May" }, { v: 6, l: "Jun" }, { v: 7, l: "Jul" }, { v: 8, l: "Aug" },
+  { v: 9, l: "Sep" }, { v: 10, l: "Oct" }, { v: 11, l: "Nov" }, { v: 12, l: "Dec" },
+];
+
+function toggleInList(list: string[], id: string): string[] {
+  return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
 }
 
 export default function AccountSettingsPage() {
@@ -85,14 +108,18 @@ function AccountSettingsContent() {
   const { token, user } = useAuth();
   const { profile, loading, setProfile } = useTutorProfile();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const degreeInputRef = useRef<HTMLInputElement>(null);
 
   const [headline, setHeadline] = useState("");
   const [bio, setBio] = useState("");
   const [city, setCity] = useState("Karachi");
+  const [cnic, setCnic] = useState("");
   const [experienceYears, setExperienceYears] = useState(0);
   const [gradeLevelId, setGradeLevelId] = useState("o_level");
   const [subjectIds, setSubjectIds] = useState<string[]>([]);
   const [teachingGradeIds, setTeachingGradeIds] = useState<string[]>([]);
+  const [teachingSystems, setTeachingSystems] = useState<string[]>([]);
+  const [teachingClassLevels, setTeachingClassLevels] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkillInput, setNewSkillInput] = useState("");
   const [certificates, setCertificates] = useState<CertificateEntry[]>([]);
@@ -104,12 +131,15 @@ function AccountSettingsContent() {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountTitle, setAccountTitle] = useState("");
   const [resumeFilename, setResumeFilename] = useState<string | null>(null);
+  const [degreeFilename, setDegreeFilename] = useState<string | null>(null);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState("");
   const [parseSuccess, setParseSuccess] = useState(false);
+  const [degreeUploading, setDegreeUploading] = useState(false);
+  const [degreeError, setDegreeError] = useState("");
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -122,10 +152,13 @@ function AccountSettingsContent() {
     setHeadline(profile.headline || "");
     setBio(profile.bio || "");
     setCity(profile.city || "Karachi");
+    setCnic(profile.cnic_number || "");
     setExperienceYears(profile.experience_years ?? 0);
     setSubjectIds(profile.subject_ids || []);
     setTeachingGradeIds(profile.teaching_grade_ids || []);
     if (profile.teaching_grade_ids?.[0]) setGradeLevelId(profile.teaching_grade_ids[0]);
+    setTeachingSystems(profile.teaching_systems || []);
+    setTeachingClassLevels(profile.teaching_class_levels || []);
     setSkills(profile.skills || []);
     setCertificates(profile.certificates || []);
     setEducation(profile.education || []);
@@ -136,6 +169,7 @@ function AccountSettingsContent() {
     setAccountNumber(profile.bank_account_number || "");
     setAccountTitle(profile.account_title || "");
     setResumeFilename(profile.resume_filename || null);
+    setDegreeFilename(profile.degree_certificate_filename || null);
   }, [profile]);
 
   const applyParseResult = (parsed: ResumeParseResult) => {
@@ -176,6 +210,23 @@ function AccountSettingsContent() {
     }
   };
 
+  const handleDegreeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !token) return;
+    setDegreeUploading(true);
+    setDegreeError("");
+    try {
+      const result = await uploadDegreeCertificate(file, token);
+      setDegreeFilename(result.degree_certificate_filename);
+      setCertificates(result.certificates || []);
+    } catch (err) {
+      setDegreeError(err instanceof Error ? err.message : "Failed to upload certificate");
+    } finally {
+      setDegreeUploading(false);
+      if (degreeInputRef.current) degreeInputRef.current.value = "";
+    }
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaveError("");
@@ -189,6 +240,14 @@ function AccountSettingsContent() {
         setSaveError("Select at least one subject you can teach.");
         return;
       }
+      if (teachingSystems.length === 0) {
+        setSaveError("Select at least one teaching system (Cambridge / IGCSE / AKUB / Matric).");
+        return;
+      }
+      if (teachingClassLevels.length === 0) {
+        setSaveError("Select at least one class / grade level you want to teach.");
+        return;
+      }
     }
 
     try {
@@ -200,12 +259,18 @@ function AccountSettingsContent() {
             headline,
             bio,
             city,
+            cnic_number: cnic || null,
             experience_years: experienceYears,
             subject_ids: subjectIds,
             teaching_grade_ids: teachingGradeIds.length ? teachingGradeIds : [gradeLevelId],
+            teaching_systems: teachingSystems,
+            teaching_class_levels: teachingClassLevels,
             skills,
             certificates,
-            education,
+            education: education.map((e) => ({
+              ...e,
+              subjects: (e.subjects || []).map((s) => s.trim()).filter(Boolean).slice(0, 3),
+            })),
             work_experience: workExperience,
             board_qualifications: boardQualifications,
             preferred_mode: mode,
@@ -218,7 +283,7 @@ function AccountSettingsContent() {
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Failed to save profile");
+        throw new Error(typeof err.detail === "string" ? err.detail : "Failed to save profile");
       }
       const updated = await res.json();
       setProfile(updated);
@@ -268,12 +333,18 @@ function AccountSettingsContent() {
   };
 
   const addEducation = () =>
-    setEducation([...education, { board: "MATRIC", institution: "", subjects: [], group: null, year_completed: null, grade_or_result: null }]);
+    setEducation([
+      ...education,
+      { board: "UNIVERSITY", institution: "", subjects: ["", "", ""], group: null, year_completed: null, grade_or_result: null },
+    ]);
 
   const addCertificate = () => setCertificates([...certificates, { name: "", issuer: "", year: undefined }]);
 
   const addExperience = () =>
-    setWorkExperience([...workExperience, { title: "", organization: "", description: "", is_current: false }]);
+    setWorkExperience([
+      ...workExperience,
+      { title: "", organization: "", description: "", is_current: false, start_month: null, end_month: null },
+    ]);
 
   const addBoardQual = () =>
     setBoardQualifications([...boardQualifications, { board: "O_LEVEL", group: null, subjects: [] }]);
@@ -288,14 +359,14 @@ function AccountSettingsContent() {
         </h1>
         <p className="text-slate-500 text-sm mt-1">
           {isOnboarding
-            ? "Welcome! Add your subjects, experience, and bio so parents can find and trust you. Experience years are based on your work history — never a default."
-            : "Upload your resume to auto-fill, or complete each section manually. Experience years come from your work history — not a default."}
+            ? "Fill in education, experience, teaching level, availability, CNIC, and certificates so parents can trust you."
+            : "Upload your resume to auto-fill, or complete each section manually."}
         </p>
       </div>
 
       {isOnboarding && (
         <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl text-indigo-900 text-sm">
-          <strong>Step 1 of onboarding:</strong> Complete your profile below, then you can browse tuition leads and apply.
+          <strong>Onboarding:</strong> Complete the sections below — especially education, teaching level, subjects, and availability.
         </div>
       )}
 
@@ -318,20 +389,12 @@ function AccountSettingsContent() {
       )}
 
       <form onSubmit={handleSaveProfile} className="space-y-6">
-        {/* Resume Upload */}
         <SectionCard title="Resume / CV Upload" icon={FileText}>
           <p className="text-xs text-slate-600">
-            Upload PDF or DOCX — Mistral AI will extract skills, education, certificates, and experience. You can edit everything after parsing.
+            Upload PDF or DOCX — we extract skills, education, and experience. You can edit everything after.
           </p>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.docx,.txt"
-              onChange={handleResumeUpload}
-              className="hidden"
-              id="resume-upload"
-            />
+            <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" onChange={handleResumeUpload} className="hidden" id="resume-upload" />
             <label
               htmlFor="resume-upload"
               className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs cursor-pointer transition ${
@@ -339,7 +402,7 @@ function AccountSettingsContent() {
               }`}
             >
               {parsing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              {parsing ? "Parsing with Mistral AI..." : "Upload & Parse Resume"}
+              {parsing ? "Parsing..." : "Upload & Parse Resume"}
             </label>
             {resumeFilename && (
               <span className="text-xs text-slate-500 flex items-center gap-1">
@@ -350,8 +413,7 @@ function AccountSettingsContent() {
           {parseError && <p className="text-xs font-bold text-red-600">{parseError}</p>}
         </SectionCard>
 
-        {/* Account header */}
-        <SectionCard title="Account" icon={ShieldCheck}>
+        <SectionCard title="Account & CNIC" icon={IdCard}>
           <div className="flex items-center gap-5">
             <div className="relative">
               <Avatar name={displayName} size="lg" />
@@ -364,6 +426,11 @@ function AccountSettingsContent() {
             <div>
               <h2 className="text-lg font-bold text-slate-900">{displayName}</h2>
               <p className="text-xs text-slate-500">{user?.email}</p>
+              {profile?.cnic_verified ? (
+                <p className="text-[11px] font-bold text-emerald-700 mt-1">CNIC verified</p>
+              ) : (
+                <p className="text-[11px] text-amber-700 mt-1">CNIC pending admin verification</p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -378,6 +445,16 @@ function AccountSettingsContent() {
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
+            </div>
+            <div className="space-y-1 sm:col-span-2">
+              <label className="text-xs font-bold text-slate-700">Tutor CNIC *</label>
+              <input
+                value={cnic}
+                onChange={(e) => setCnic(e.target.value)}
+                placeholder="42101-1234567-1"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono"
+              />
+              <p className="text-[10px] text-slate-500">13-digit CNIC. Used for verification — never shown publicly.</p>
             </div>
             <div className="space-y-1 sm:col-span-2">
               <label className="text-xs font-bold text-slate-700">Bio / About</label>
@@ -397,7 +474,215 @@ function AccountSettingsContent() {
           </div>
         </SectionCard>
 
-        {/* Skills */}
+        <SectionCard
+          title="1. Education — Last Qualification"
+          icon={GraduationCap}
+          hint="a) Uni/Board  b) Name  c) Three key subjects  d) Grade/GPA  e) Year of passing"
+          action={<button type="button" onClick={addEducation} className="text-xs font-bold text-indigo-600 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add</button>}
+        >
+          {education.length === 0 && <p className="text-xs text-slate-500">Add your highest / last qualification.</p>}
+          {education.map((edu, idx) => (
+            <EducationForm
+              key={idx}
+              edu={edu}
+              onChange={(updated) => {
+                const copy = [...education];
+                copy[idx] = updated;
+                setEducation(copy);
+              }}
+              onRemove={() => setEducation(education.filter((_, i) => i !== idx))}
+            />
+          ))}
+        </SectionCard>
+
+        <SectionCard
+          title="2. Work Experience"
+          icon={Briefcase}
+          hint="a) Profession  b) Organization  c) Responsibilities  d) From – To"
+          action={<button type="button" onClick={addExperience} className="text-xs font-bold text-indigo-600 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add</button>}
+        >
+          {workExperience.length === 0 && <p className="text-xs text-slate-500">Add teaching or related work experience.</p>}
+          {workExperience.map((exp, idx) => (
+            <div key={idx} className="border border-slate-100 rounded-xl p-4 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">a) Profession</label>
+                  <input value={exp.title} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, title: e.target.value }; setWorkExperience(c); }} placeholder="e.g. Home Tutor / Lecturer" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">b) Organization</label>
+                  <input value={exp.organization} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, organization: e.target.value }; setWorkExperience(c); }} placeholder="School / Academy / Self-employed" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">c) Responsibilities</label>
+                <textarea value={exp.description || ""} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, description: e.target.value }; setWorkExperience(c); }} placeholder="Key responsibilities and achievements..." rows={2} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs resize-none" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">d) Experience from – to</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <select value={exp.start_month || ""} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, start_month: Number(e.target.value) || null }; setWorkExperience(c); }} className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs">
+                    <option value="">From month</option>
+                    {MONTHS.map((m) => <option key={m.v} value={m.v}>{m.l}</option>)}
+                  </select>
+                  <input type="number" value={exp.start_year || ""} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, start_year: Number(e.target.value) || null }; setWorkExperience(c); }} placeholder="From year" className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
+                  <select value={exp.end_month || ""} disabled={exp.is_current} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, end_month: Number(e.target.value) || null }; setWorkExperience(c); }} className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs disabled:opacity-50">
+                    <option value="">To month</option>
+                    {MONTHS.map((m) => <option key={m.v} value={m.v}>{m.l}</option>)}
+                  </select>
+                  <input type="number" value={exp.end_year || ""} disabled={exp.is_current} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, end_year: Number(e.target.value) || null, is_current: false }; setWorkExperience(c); }} placeholder="To year" className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs disabled:opacity-50" />
+                </div>
+                <label className="flex items-center gap-2 text-xs text-slate-600 mt-2">
+                  <input type="checkbox" checked={exp.is_current || false} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, is_current: e.target.checked, end_year: e.target.checked ? null : exp.end_year, end_month: e.target.checked ? null : exp.end_month }; setWorkExperience(c); }} />
+                  Currently working here
+                </label>
+              </div>
+              <button type="button" onClick={() => setWorkExperience(workExperience.filter((_, i) => i !== idx))} className="text-xs text-red-600 font-bold flex items-center gap-1"><Trash2 className="w-3.5 h-3.5" /> Remove</button>
+            </div>
+          ))}
+        </SectionCard>
+
+        <SectionCard
+          title="3. Desired Teaching Level"
+          icon={GraduationCap}
+          hint="a) System  b) Class / grade level  c) Subjects of choice"
+        >
+          <div className="space-y-3">
+            <div>
+              <label className="text-[10px] font-bold text-slate-500 uppercase">a) Cambridge / IGCSE / AKUB / Matric</label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {TEACHING_SYSTEMS.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setTeachingSystems(toggleInList(teachingSystems, s.id))}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                      teachingSystems.includes(s.id)
+                        ? "bg-indigo-600 text-white border-indigo-600"
+                        : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-slate-500 uppercase">b) Class / Grade level</label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {TEACHING_CLASS_LEVELS.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setTeachingClassLevels(toggleInList(teachingClassLevels, s.id))}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                      teachingClassLevels.includes(s.id)
+                        ? "bg-indigo-600 text-white border-indigo-600"
+                        : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">c) Subjects of choice</label>
+              <SubjectPicker
+                gradeLevelId={gradeLevelId}
+                subjectIds={subjectIds}
+                onGradeLevelChange={setGradeLevelId}
+                onSubjectIdsChange={setSubjectIds}
+                teachingGradeIds={teachingGradeIds}
+                onTeachingGradeIdsChange={setTeachingGradeIds}
+                accumulateAcrossGrades
+              />
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Board Qualifications (optional detail)"
+          icon={GraduationCap}
+          hint="Extra board/subject detail for Matric / Inter / O / A Level matching"
+          action={<button type="button" onClick={addBoardQual} className="text-xs font-bold text-indigo-600 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add Board</button>}
+        >
+          {boardQualifications.map((bq, idx) => (
+            <BoardQualForm
+              key={idx}
+              bq={bq}
+              onChange={(updated) => {
+                const c = [...boardQualifications];
+                c[idx] = updated;
+                setBoardQualifications(c);
+              }}
+              onRemove={() => setBoardQualifications(boardQualifications.filter((_, i) => i !== idx))}
+            />
+          ))}
+        </SectionCard>
+
+        <SectionCard title="4. Availability Mode" icon={CreditCard} hint="How you prefer to teach">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {AVAILABILITY_MODES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setMode(m.id)}
+                className={`p-4 rounded-2xl border text-left transition ${
+                  mode === m.id
+                    ? "border-indigo-600 bg-indigo-50 ring-2 ring-indigo-200"
+                    : "border-slate-200 bg-white hover:border-indigo-300"
+                }`}
+              >
+                <div className="text-xs font-extrabold text-slate-900">{m.label}</div>
+                <div className="text-[10px] text-slate-500 mt-1">
+                  {m.id === "HOME" && "Visit students at home / venue"}
+                  {m.id === "ONLINE" && "Teach via video call"}
+                  {m.id === "BOTH" && "Flexible — visiting and online"}
+                </div>
+              </button>
+            ))}
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Degree Certificate" icon={Award}>
+          <p className="text-xs text-slate-600">Upload your degree / last qualification certificate (PDF or image).</p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <input ref={degreeInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={handleDegreeUpload} className="hidden" id="degree-upload" />
+            <label
+              htmlFor="degree-upload"
+              className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs cursor-pointer transition ${
+                degreeUploading ? "bg-slate-100 text-slate-400" : "bg-slate-900 hover:bg-slate-800 text-white"
+              }`}
+            >
+              {degreeUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {degreeUploading ? "Uploading..." : "Upload Degree Certificate"}
+            </label>
+            {degreeFilename && (
+              <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> {degreeFilename}
+              </span>
+            )}
+          </div>
+          {degreeError && <p className="text-xs font-bold text-red-600">{degreeError}</p>}
+        </SectionCard>
+
+        <SectionCard title="Other Certificates & Training" icon={Award} action={<button type="button" onClick={addCertificate} className="text-xs font-bold text-indigo-600 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add</button>}>
+          {certificates.filter((c) => c.kind !== "DEGREE").length === 0 && (
+            <p className="text-xs text-slate-500">Optional training certificates.</p>
+          )}
+          {certificates.map((cert, idx) =>
+            cert.kind === "DEGREE" ? null : (
+              <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end border border-slate-100 rounded-xl p-3">
+                <input value={cert.name} onChange={(e) => { const c = [...certificates]; c[idx] = { ...cert, name: e.target.value }; setCertificates(c); }} placeholder="Certificate name" className="sm:col-span-4 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
+                <input value={cert.issuer || ""} onChange={(e) => { const c = [...certificates]; c[idx] = { ...cert, issuer: e.target.value }; setCertificates(c); }} placeholder="Issuer" className="sm:col-span-4 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
+                <input type="number" value={cert.year || ""} onChange={(e) => { const c = [...certificates]; c[idx] = { ...cert, year: Number(e.target.value) || undefined }; setCertificates(c); }} placeholder="Year" className="sm:col-span-3 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
+                <button type="button" onClick={() => setCertificates(certificates.filter((_, i) => i !== idx))} className="sm:col-span-1 p-2 text-red-500 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4 mx-auto" /></button>
+              </div>
+            )
+          )}
+        </SectionCard>
+
         <SectionCard title="Skills" icon={Sparkles}>
           <div className="flex flex-wrap gap-2 min-h-[40px]">
             {skills.map((s) => (
@@ -413,81 +698,8 @@ function AccountSettingsContent() {
           </div>
         </SectionCard>
 
-        {/* Education */}
-        <SectionCard title="Education" icon={GraduationCap} action={<button type="button" onClick={addEducation} className="text-xs font-bold text-indigo-600 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add</button>}>
-          {education.length === 0 && <p className="text-xs text-slate-500">No education added. Upload a resume or add manually.</p>}
-          {education.map((edu, idx) => (
-            <EducationForm key={idx} edu={edu} onChange={(updated) => { const copy = [...education]; copy[idx] = updated; setEducation(copy); }} onRemove={() => setEducation(education.filter((_, i) => i !== idx))} />
-          ))}
-        </SectionCard>
-
-        {/* Certificates */}
-        <SectionCard title="Certificates & Training" icon={Award} action={<button type="button" onClick={addCertificate} className="text-xs font-bold text-indigo-600 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add</button>}>
-          {certificates.length === 0 && <p className="text-xs text-slate-500">No certificates added yet.</p>}
-          {certificates.map((cert, idx) => (
-            <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end border border-slate-100 rounded-xl p-3">
-              <input value={cert.name} onChange={(e) => { const c = [...certificates]; c[idx] = { ...cert, name: e.target.value }; setCertificates(c); }} placeholder="Certificate name" className="sm:col-span-4 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
-              <input value={cert.issuer || ""} onChange={(e) => { const c = [...certificates]; c[idx] = { ...cert, issuer: e.target.value }; setCertificates(c); }} placeholder="Issuer" className="sm:col-span-4 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
-              <input type="number" value={cert.year || ""} onChange={(e) => { const c = [...certificates]; c[idx] = { ...cert, year: Number(e.target.value) || undefined }; setCertificates(c); }} placeholder="Year" className="sm:col-span-3 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
-              <button type="button" onClick={() => setCertificates(certificates.filter((_, i) => i !== idx))} className="sm:col-span-1 p-2 text-red-500 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4 mx-auto" /></button>
-            </div>
-          ))}
-        </SectionCard>
-
-        {/* Work Experience */}
-        <SectionCard title="Work Experience" icon={Briefcase} action={<button type="button" onClick={addExperience} className="text-xs font-bold text-indigo-600 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add</button>}>
-          {workExperience.length === 0 && <p className="text-xs text-slate-500">No work experience added yet.</p>}
-          {workExperience.map((exp, idx) => (
-            <div key={idx} className="border border-slate-100 rounded-xl p-4 space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input value={exp.title} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, title: e.target.value }; setWorkExperience(c); }} placeholder="Job title (e.g. Home Tutor)" className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
-                <input value={exp.organization} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, organization: e.target.value }; setWorkExperience(c); }} placeholder="Organization / Self-employed" className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
-                <input type="number" value={exp.start_year || ""} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, start_year: Number(e.target.value) || null }; setWorkExperience(c); }} placeholder="Start year" className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
-                <input type="number" value={exp.end_year || ""} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, end_year: Number(e.target.value) || null, is_current: false }; setWorkExperience(c); }} placeholder="End year (leave blank if current)" className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" disabled={exp.is_current} />
-              </div>
-              <label className="flex items-center gap-2 text-xs text-slate-600">
-                <input type="checkbox" checked={exp.is_current || false} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, is_current: e.target.checked, end_year: e.target.checked ? null : exp.end_year }; setWorkExperience(c); }} />
-                Currently working here
-              </label>
-              <textarea value={exp.description || ""} onChange={(e) => { const c = [...workExperience]; c[idx] = { ...exp, description: e.target.value }; setWorkExperience(c); }} placeholder="Describe your role and achievements..." rows={2} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs resize-none" />
-              <button type="button" onClick={() => setWorkExperience(workExperience.filter((_, i) => i !== idx))} className="text-xs text-red-600 font-bold flex items-center gap-1"><Trash2 className="w-3.5 h-3.5" /> Remove</button>
-            </div>
-          ))}
-        </SectionCard>
-
-        {/* Board Qualifications */}
-        <SectionCard title="Board Qualifications (What You Can Teach)" icon={GraduationCap} action={<button type="button" onClick={addBoardQual} className="text-xs font-bold text-indigo-600 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add Board</button>}>
-          <p className="text-xs text-slate-500">Select your Pakistani board and subjects — Matric, Inter, O Level, or A Level. This prevents confusion when matching with parents.</p>
-          {boardQualifications.map((bq, idx) => (
-            <BoardQualForm key={idx} bq={bq} onChange={(updated) => { const c = [...boardQualifications]; c[idx] = updated; setBoardQualifications(c); }} onRemove={() => setBoardQualifications(boardQualifications.filter((_, i) => i !== idx))} />
-          ))}
-        </SectionCard>
-
-        {/* Teaching Subjects */}
-        <SectionCard title="Subjects You Can Teach" icon={GraduationCap}>
-          <p className="text-xs text-slate-500 mb-3">Pick subjects from the official catalog — same lists parents use when posting tuition.</p>
-          <SubjectPicker
-            gradeLevelId={gradeLevelId}
-            subjectIds={subjectIds}
-            onGradeLevelChange={setGradeLevelId}
-            onSubjectIdsChange={setSubjectIds}
-            teachingGradeIds={teachingGradeIds}
-            onTeachingGradeIdsChange={setTeachingGradeIds}
-            accumulateAcrossGrades
-          />
-        </SectionCard>
-
-        {/* Bank */}
-        <SectionCard title="Teaching Mode & Payout" icon={CreditCard}>
+        <SectionCard title="Payout Details" icon={CreditCard}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-600">Teaching Mode</label>
-              <select value={mode} onChange={(e) => setMode(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs">
-                <option value="BOTH">Both Home & Online</option>
-                <option value="HOME">Home Only</option>
-                <option value="ONLINE">Online Only</option>
-              </select>
-            </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-600">Bank Name</label>
               <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs" />
@@ -496,7 +708,7 @@ function AccountSettingsContent() {
               <label className="text-xs font-bold text-slate-600">Account Title</label>
               <input type="text" value={accountTitle} onChange={(e) => setAccountTitle(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs" />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 sm:col-span-2">
               <label className="text-xs font-bold text-slate-600">IBAN / Account Number</label>
               <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono" />
             </div>
@@ -538,71 +750,75 @@ function EducationForm({
   onChange: (e: EducationEntry) => void;
   onRemove: () => void;
 }) {
-  const boardId = (edu.board || "MATRIC") as BoardId;
-  const groups = getGroupsForBoard(boardId);
-  const availableSubjects = getSubjectsForBoard(boardId, edu.group || undefined);
+  const subjects = [...(edu.subjects || [])];
+  while (subjects.length < 3) subjects.push("");
 
-  const toggleSubject = (sub: string) => {
-    const current = edu.subjects || [];
-    onChange({
-      ...edu,
-      subjects: current.includes(sub) ? current.filter((s) => s !== sub) : [...current, sub],
-    });
+  const setSubjectAt = (i: number, value: string) => {
+    const next = [...subjects];
+    next[i] = value;
+    onChange({ ...edu, subjects: next.filter((s, idx) => s.trim() || idx < 3).slice(0, 3).map((s) => s.trim() ? s : "") });
   };
 
   return (
     <div className="border border-slate-100 rounded-xl p-4 space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-bold text-slate-500 uppercase">Board</label>
+          <label className="text-[10px] font-bold text-slate-500 uppercase">a) Uni / Board</label>
           <select
-            value={boardId}
-            onChange={(e) => onChange({ ...edu, board: e.target.value, group: null, subjects: [] })}
+            value={edu.board || "UNIVERSITY"}
+            onChange={(e) => onChange({ ...edu, board: e.target.value })}
             className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs"
           >
-            {BOARD_OPTIONS.map((b) => (
+            {QUALIFICATION_TYPES.map((b) => (
               <option key={b.id} value={b.id}>{b.label}</option>
             ))}
           </select>
         </div>
         <div className="space-y-1">
-          <label className="text-[10px] font-bold text-slate-500 uppercase">Group / Stream</label>
-          <select
-            value={edu.group || ""}
-            onChange={(e) => onChange({ ...edu, group: e.target.value || null, subjects: [] })}
+          <label className="text-[10px] font-bold text-slate-500 uppercase">b) Name of Uni / Board</label>
+          <input
+            value={edu.institution}
+            onChange={(e) => onChange({ ...edu, institution: e.target.value })}
+            placeholder="e.g. University of Karachi / BISE Karachi"
             className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs"
-          >
-            <option value="">All groups</option>
-            {groups.map((g) => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
+          />
         </div>
-        <input value={edu.institution} onChange={(e) => onChange({ ...edu, institution: e.target.value })} placeholder="School / College / University" className="sm:col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
-        <input type="number" value={edu.year_completed || ""} onChange={(e) => onChange({ ...edu, year_completed: Number(e.target.value) || null })} placeholder="Year completed" className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
-        <input value={edu.grade_or_result || ""} onChange={(e) => onChange({ ...edu, grade_or_result: e.target.value })} placeholder="Grade / Result (e.g. A*, 85%)" className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs" />
       </div>
-      {availableSubjects.length > 0 && (
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold text-slate-500 uppercase">Subjects (select from board list)</label>
-          <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
-            {availableSubjects.map((sub) => (
-              <button
-                key={sub}
-                type="button"
-                onClick={() => toggleSubject(sub)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${
-                  (edu.subjects || []).includes(sub)
-                    ? "bg-indigo-600 text-white border-indigo-600"
-                    : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300"
-                }`}
-              >
-                {sub}
-              </button>
-            ))}
-          </div>
+      <div className="space-y-1">
+        <label className="text-[10px] font-bold text-slate-500 uppercase">c) Key subjects (any three)</label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {[0, 1, 2].map((i) => (
+            <input
+              key={i}
+              value={subjects[i] || ""}
+              onChange={(e) => setSubjectAt(i, e.target.value)}
+              placeholder={`Subject ${i + 1}`}
+              className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs"
+            />
+          ))}
         </div>
-      )}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-slate-500 uppercase">d) Grade / Division / GPA</label>
+          <input
+            value={edu.grade_or_result || ""}
+            onChange={(e) => onChange({ ...edu, grade_or_result: e.target.value })}
+            placeholder="e.g. 1st Division / 3.5 GPA / A*"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-slate-500 uppercase">e) Year of passing</label>
+          <input
+            type="number"
+            value={edu.year_completed || ""}
+            onChange={(e) => onChange({ ...edu, year_completed: Number(e.target.value) || null })}
+            placeholder="e.g. 2020"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs"
+          />
+        </div>
+      </div>
       <button type="button" onClick={onRemove} className="text-xs text-red-600 font-bold flex items-center gap-1"><Trash2 className="w-3.5 h-3.5" /> Remove</button>
     </div>
   );
